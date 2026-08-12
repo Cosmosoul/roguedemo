@@ -1,22 +1,15 @@
+
 <!DOCTYPE html>
-
 <html lang="zh-CN">
-
 <head>
-
 <meta charset="UTF-8">
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-
 <title>深渊守卫</title>
-
 <style>
-
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; }
   html, body { width:100%; height:100%; background:#0a0a12; overflow:hidden; font-family:"Microsoft YaHei","PingFang SC",sans-serif; color:#e0e0e0; }
   #gameWrap { position:relative; width:100%; height:100%; display:flex; align-items:center; justify-content:center; }
   #gameCanvas { background:linear-gradient(180deg,#0d0d1a 0%,#1a0a1e 60%,#0a0a12 100%); display:block; touch-action:none; }
-
   /* HUD */
   #hud { position:absolute; top:0; left:0; right:0; padding:8px 12px; pointer-events:none; z-index:10; }
   .hud-row { display:flex; justify-content:space-between; align-items:center; font-size:13px; text-shadow:0 0 4px #000; margin-bottom:4px; }
@@ -25,14 +18,12 @@
   #hpBar { height:100%; background:linear-gradient(90deg,#ff3b3b,#ff7b7b); transition:width .15s; width:100%; }
   #energyBar { height:100%; background:linear-gradient(90deg,#2b7bff,#6bb3ff); transition:width .1s; width:0%; }
   .bar-label { position:relative; top:-13px; text-align:center; font-size:10px; line-height:14px; text-shadow:0 0 3px #000; font-weight:bold; }
-
-  /* bottom buttons 扩容1个按钮给技能图鉴 */
-  #bottomBar { position:absolute; bottom:0; left:0; right:0; display:flex; gap:4px; padding:8px 8px 12px; z-index:10; background:linear-gradient(0deg,rgba(0,0,0,.7),transparent); }
-  .btn { flex:1; padding:10px 2px; background:rgba(40,40,60,.85); border:1px solid rgba(255,255,255,.2); border-radius:10px; font-size:11px; text-align:center; cursor:pointer; transition:all .1s; color:#ddd; }
+  /* bottom buttons */
+  #bottomBar { position:absolute; bottom:0; left:0; right:0; display:flex; gap:6px; padding:8px 10px 12px; z-index:10; background:linear-gradient(0deg,rgba(0,0,0,.7),transparent); }
+  .btn { flex:1; padding:10px 4px; background:rgba(40,40,60,.85); border:1px solid rgba(255,255,255,.2); border-radius:10px; font-size:12px; text-align:center; cursor:pointer; transition:all .1s; color:#ddd; }
   .btn:active, .btn.active { background:rgba(80,120,255,.8); border-color:#8af; transform:scale(.95); }
-  .btn .icon { font-size:18px; display:block; margin-bottom:2px; }
+  .btn .icon { font-size:20px; display:block; margin-bottom:2px; }
   .btn .cd { position:absolute; font-size:10px; color:#ff9; }
-
   /* card modal */
   #cardModal { position:absolute; inset:0; background:rgba(0,0,0,.82); display:none; flex-direction:column; align-items:center; justify-content:center; z-index:50; padding:20px; }
   #cardModal.show { display:flex; }
@@ -46,25 +37,8 @@
   .card .c-name { font-size:15px; font-weight:bold; color:#fff; margin-bottom:4px; }
   .card .c-level { font-size:11px; color:#8af; margin-bottom:8px; }
   .card .c-desc { font-size:11px; color:#bbb; line-height:1.5; flex:1; }
-
-  /* 技能图鉴弹窗新增 */
-  #skillBookModal { position:absolute; inset:0; background:rgba(0,0,0,.88); display:none; flex-direction:column; z-index:80; padding:16px; overflow:auto; }
-  #skillBookModal.show { display:flex; }
-  .skillbook-head { display:flex; justify-content:space-between; align-items:center; width:100%; max-width:600px; margin:0 auto 12px; }
-  .skillbook-title { font-size:24px; color:#ffd966; }
-  #closeSkillBook { padding:6px 16px; background:#ff5555; border:none; border-radius:8px; color:#fff; cursor:pointer; }
-  #skillListWrap { width:100%; max-width:600px; margin:0 auto; display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
-  .skill-item { width:170px; background:#1c1c36; border:1px solid #557; border-radius:10px; padding:10px; }
-  .skill-item-top { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
-  .skill-icon { font-size:26px; }
-  .skill-name-lv { display:flex; flex-direction:column; }
-  .skill-name { font-weight:bold; color:#fff; }
-  .skill-lv { font-size:12px; color:#8cf; }
-  .skill-desc { font-size:11px; color:#ccc; line-height:1.4; white-space:pre-line; }
-
   /* countdown */
   #waveCountdown { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:72px; font-weight:bold; color:#ffd966; text-shadow:0 0 24px rgba(255,200,80,.8); z-index:20; display:none; }
-
   /* game over */
   #overModal { position:absolute; inset:0; background:rgba(0,0,0,.9); display:none; flex-direction:column; align-items:center; justify-content:center; z-index:60; padding:20px; }
   #overModal.show { display:flex; }
@@ -73,7 +47,6 @@
   .over-skills { margin-top:14px; max-width:320px; font-size:12px; color:#aaa; text-align:center; line-height:1.7; }
   #restartBtn { margin-top:22px; padding:12px 36px; background:linear-gradient(90deg,#4a6cf7,#6b8cff); border:none; border-radius:24px; color:#fff; font-size:16px; cursor:pointer; }
   #restartBtn:active { transform:scale(.95); }
-
   /* start screen */
   #startModal { position:absolute; inset:0; background:linear-gradient(180deg,#0a0a1a,#1a0a2a); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:70; padding:20px; }
   #startModal.hide { display:none; }
@@ -82,15 +55,12 @@
   #startBtn { padding:14px 48px; background:linear-gradient(90deg,#4a6cf7,#8a5cf7); border:none; border-radius:28px; color:#fff; font-size:18px; cursor:pointer; box-shadow:0 4px 20px rgba(100,100,255,.5); }
   #startBtn:active { transform:scale(.95); }
   .start-tip { font-size:12px; color:#666; margin-top:24px; text-align:center; line-height:1.8; max-width:300px; }
-
   /* boss warning */
   #bossWarning { position:absolute; top:30%; left:0; right:0; text-align:center; font-size:28px; color:#ff3333; text-shadow:0 0 16px #f00; z-index:15; display:none; animation:pulse .5s infinite alternate; }
   @keyframes pulse { from{opacity:.5;transform:scale(.95);} to{opacity:1;transform:scale(1.05);} }
   #capWarning { position:absolute; top:80px; left:50%; transform:translateX(-50%); font-size:12px; color:#ff5555; background:rgba(80,0,0,.7); padding:4px 12px; border-radius:10px; z-index:11; display:none; }
 </style>
-
 </head>
-
 <body>
 <div id="gameWrap">
   <canvas id="gameCanvas"></canvas>
@@ -111,16 +81,15 @@
   <div id="bossWarning">⚠ BOSS 来袭 ⚠</div>
   <div id="waveCountdown"></div>
 
-  <!-- 底部按钮 新增技能图鉴btnSkillBook -->
+  <!-- bottom bar -->
   <div id="bottomBar">
     <div class="btn active" id="btnAuto"><span class="icon">🤖</span>自动</div>
     <div class="btn" id="btnAttack"><span class="icon">⚔️</span>平A</div>
     <div class="btn" id="btnAoe"><span class="icon">💥</span>群攻</div>
     <div class="btn" id="btnLock"><span class="icon">🎯</span>锁定</div>
-    <div class="btn" id="btnSkillBook"><span class="icon">📖</span>图鉴</div>
   </div>
 
-  <!-- 抽卡弹窗 -->
+  <!-- card modal -->
   <div id="cardModal">
     <div id="cardTitle">⚡ 能量充盈 · 技能抽取</div>
     <div id="cardSub">选择一张技能强化自身</div>
@@ -128,19 +97,9 @@
     <div id="cardList"></div>
   </div>
 
-  <!-- 新增：技能图鉴弹窗 -->
-  <div id="skillBookModal">
-    <div class="skillbook-head">
-      <div class="skillbook-title">全部技能图鉴</div>
-      <button id="closeSkillBook">关闭</button>
-    </div>
-    <div id="skillListWrap"></div>
-  </div>
+  <!-- wave countdown -->
 
-  <!-- 波次倒计时 -->
-  <div id="waveCountdown"></div>
-
-  <!-- 游戏结束 -->
+  <!-- game over -->
   <div id="overModal">
     <div id="overTitle">💀 守卫陨落</div>
     <div class="over-stat" id="overWave"></div>
@@ -151,7 +110,7 @@
     <button id="restartBtn">重新挑战</button>
   </div>
 
-  <!-- 开始界面 -->
+  <!-- start -->
   <div id="startModal">
     <div id="startTitle">深渊守卫</div>
     <div id="startSub">Roguelike 技能构筑 · 无限生存</div>
@@ -166,156 +125,276 @@
 </div>
 
 <script>
-// ==================== 配置常量（心流难度重新调校，消除8波暴毙，平滑梯度） ====================
+// ====================【数值策划修改指引】====================
+/*
+【策划修改规则】
+1. 怪物、波次、刷怪、血量上限等全局配置，修改 CFG 对象内字面常量；
+2. 所有技能数值全部集中在 SKILLS 这个大对象；
+   - 每个技能对象内 data(level)：输入等级，返回该等级下所有战斗数值，不要写业务逻辑，只做查表/公式；
+   - getDesc(level)：直接从data拿数值生成界面显示文案；
+   - maxLevel：技能等级上限；Infinity代表无等级上限；
+   - isMax(level)【可选】：当达到数值封顶（如倍率上限、半径上限）返回true，抽卡时标记已满级；
+3. 表格类技能：优先用数组table[level‑1]查表；
+4. 公式类技能：直接写数学表达式，注意用Math.min做上限封顶；
+5. 不要在dealDamage、killMonster等战斗函数内硬编码战斗数值；
+   所有战斗需要的参数，全部从 SKILLS[skillId].data(getLevel(skillId)) 获取；
+6. 特殊卡 healcard：maxLevel=1，不可升级，仅抽卡池产出；
+7. 新增技能：
+   ① 在SKILLS增加一条；
+   ② 在CARD_POOL数组增加id；
+   ③ 编写data、getDesc；
+8. 回血技能的永久血量加成：存在G.player.hpBonusPct，每局游戏运行时内存生效，不存档。
+*/
 const CFG = {
   W: 540, H: 960,
   PLAYER_X: 270, PLAYER_Y: 760,
   PLAYER_R: 22,
-  PLAYER_MAX_HP: 100,
+  PLAYER_BASE_MAX_HP: 100, // 玩家基础血量，回血技能会在此基础上做百分比加成
   ENERGY_BASE: 100,
   ENERGY_PER_KILL: 20,
-  ENERGY_GROWTH: 1.18,
-  MONSTER_BASE_HP: 30,
+  ENERGY_GROWTH: 1.2,
+  MONSTER_BASE_HP: 25,
   MONSTER_BASE_ATK: 5,
   MONSTER_SPEED: 60,
-  MONSTER_ATK_RANGE: 36,
-  MONSTER_ATK_INTERVAL: 1.2,
-  HP_MULT_PER_ROUND: 1.18,
-  FIRST_WAVE_COUNT: 7,
-  COUNT_PER_WAVE_ADD: 1,
-  SPAWN_INTERVAL: 0.5,
-  SPAWN_DELAY: 0.3,
+  MONSTER_ATK_RANGE: 30,
+  MONSTER_ATK_INTERVAL: 1.3,
+  HP_MULT_PER_ROUND: 1.4,
+  FIRST_WAVE_COUNT: 5,
+  COUNT_PER_WAVE_ADD: 5,
+  SPAWN_INTERVAL: 0.4,
+  SPAWN_DELAY: 0.1,
   MAX_ON_SCREEN: 500,
   WAVE_COUNTDOWN: 3,
   CARD_TIMEOUT: 15,
-  HEAL_CARD_PCT: 0.30,
-  BOSS_ATK_MULT_BASE: 1.1,    // BOSS前期伤害降低，避免暴毙
-  BOSS_ATK_MULT_PER_ROUND: 0.13,
-  EXECUTE_BOSS_DECAY: 0.09,
+  HEAL_CARD_PCT: 0.50, //回复卡恢复最大血量50%
+  HEAL_SKILL_COOLDOWN:3.0, //回血技能内置冷却3秒
 };
 
-// ==================== 技能定义（下调天雷概率，优化前期生存压力） ====================
+// ==================== 技能定义 ====================
 const SKILLS = {
   basic: {
     id:'basic', name:'平A', icon:'⚔️', type:'active', maxLevel:Infinity,
     data(level){
-      if(level<=5) return { dmg:[10,12,14,16,20][level-1], cd:0.6 };
-      if(level===6) return { dmg:25.5, cd:0.6 };
-      if(level===7) return { dmg:27, cd:0.6 };
-      return { dmg: 25 + (level-5)*(level-5)/2, cd:0.6 };
+      const table = [
+        {dmg:12},
+        {dmg:14},
+        {dmg:18},
+        {dmg:20},
+        {dmg:25},
+        {dmg:30},
+        {dmg:35}
+      ];
+      let dmg;
+      if(level <= 7){
+        dmg = table[level-1].dmg;
+      }else{
+        dmg = 35 + Math.pow((level-5),2)/2;
+      }
+      return { dmg:dmg, cd:0.6 };
     },
-    getDesc(level){ const d=this.data(level); return `单体 ${d.dmg.toFixed(1)} 伤害\n冷却 ${d.cd}s`; }
+    getDesc(level){
+      const d=this.data(level);
+      return `单体锁定 ${d.dmg.toFixed(1)} 伤害\n冷却 ${d.cd}s`;
+    }
   },
   aoe: {
     id:'aoe', name:'群攻', icon:'💥', type:'active', maxLevel:Infinity,
     data(level){
-      const table=[
-        {r:10,n:5,d:5},{r:13,n:5,d:6},{r:15,n:6,d:7},{r:20,n:5,d:8},
-        {r:25,n:8,d:10},{r:30,n:5,d:12.75},{r:40,n:10,d:13.5}
+      const table = [
+        {r:100, n:5, d:5, cd:8},
+        {r:130, n:5, d:6, cd:8},
+        {r:150, n:6, d:7, cd:8},
+        {r:200, n:5, d:8, cd:8},
+        {r:250, n:8, d:10, cd:8},
+        {r:300, n:5, d:15, cd:8},
+        {r:400, n:10, d:20, cd:8}
       ];
-      if(level<=7) return {...table[level-1], cd:8};
-      return { r:40, n:10, d:(25+(level-5)*(level-5)/2)/2, cd:5 };
+      if(level <=7){
+        return {...table[level-1]};
+      }else{
+        return {
+          r:400,
+          n:10,
+          d:25 + Math.pow((level-5),2),
+          cd:5
+        };
+      }
     },
-    getDesc(level){ const d=this.data(level); return `${d.r}px 内随机 ${d.n} 目标\n${d.d.toFixed(1)} 伤害 · 冷却 ${d.cd}s`; }
+    getDesc(level){
+      const d=this.data(level);
+      return `${d.r}px 内随机 ${d.n} 目标\n${d.d.toFixed(1)} 伤害 · 冷却 ${d.cd}s`;
+    }
   },
   thorns: {
-    id:'thorns', name:'反伤', icon:'🌵', type:'passive', maxLevel:Infinity,
+    id:'thorns', name:'反伤', icon:'🌵', type:'passive', maxLevel:7,
     data(level){
-      if(level<=6) return { prob:[0.05,0.10,0.15,0.20,0.25,0.30][level-1], mult:0.10 };
-      if(level===7) return { prob:0.30, mult:0.15 };
-      return { prob:0.30, mult:Math.min(1.0, 0.15+(level-7)*0.05) };
+      const table = [
+        {prob:0.5, mult:0.5},
+        {prob:0.55, mult:0.6},
+        {prob:0.6, mult:0.7},
+        {prob:0.65, mult:0.8},
+        {prob:0.7, mult:1.0},
+        {prob:0.75, mult:1.2},
+        {prob:0.8, mult:1.5}
+      ];
+      const base = table[level-1];
+      const multCap = Math.min(1.0, base.mult);
+      return { prob:base.prob, mult:multCap };
     },
-    getDesc(level){ const d=this.data(level); return `受击 ${(d.prob*100).toFixed(0)}% 反弹\n平A ${(d.mult*100).toFixed(0)}% 伤害`; },
-    isMax(level){ return level>=7 && this.data(level).mult>=1.0; }
+    getDesc(level){
+      const d=this.data(level);
+      return `受击 ${(d.prob*100).toFixed(0)}% 反弹\n平A ${(d.mult*100).toFixed(0)}% 伤害(不可暴击)`;
+    }
   },
   heal: {
-    id:'heal', name:'治疗', icon:'💚', type:'passive', maxLevel:5,
+    id:'heal', name:'回血', icon:'💚', type:'passive', maxLevel:10,
     data(level){
-      const table=[
-        {prob:0.20,amt:0.06},{prob:0.25,amt:0.06},{prob:0.30,amt:0.06},
-        {prob:0.30,amt:0.08},{prob:0.30,amt:0.10}
+      // 等级1‑10查表；hpBonusPct本局永久血量提升
+      const table = [
+        {prob:0.20, amtPct:0.06, hpBonusPct:0.00},
+        {prob:0.20, amtPct:0.06, hpBonusPct:0.20},
+        {prob:0.25, amtPct:0.06, hpBonusPct:0.20},
+        {prob:0.25, amtPct:0.06, hpBonusPct:0.25},
+        {prob:0.30, amtPct:0.06, hpBonusPct:0.25},
+        {prob:0.30, amtPct:0.06, hpBonusPct:0.30},
+        {prob:0.30, amtPct:0.08, hpBonusPct:0.30},
+        {prob:0.30, amtPct:0.08, hpBonusPct:0.35},
+        {prob:0.30, amtPct:0.10, hpBonusPct:0.35},
+        {prob:0.30, amtPct:0.10, hpBonusPct:0.40},
       ];
       return table[level-1];
     },
-    getDesc(level){ const d=this.data(level); return `主动攻击 ${(d.prob*100).toFixed(0)}% 回血\n回复 ${(d.amt*100).toFixed(0)}% 最大HP`; }
+    getDesc(level){
+      const d=this.data(level);
+      return `攻击 ${(d.prob*100).toFixed(0)}%概率回血${(d.amtPct*100).toFixed(0)}%最大血量\n本局血量上限+${(d.hpBonusPct*100).toFixed(0)}%`;
+    }
   },
   crit: {
-    id:'crit', name:'暴击', icon:'⚡', type:'passive', maxLevel:Infinity,
+    id:'crit', name:'暴击', icon:'⚡', type:'passive', maxLevel:7,
     data(level){
-      if(level<=4) return { prob:[0.05,0.10,0.15,0.20][level-1], bonus:0.10 };
-      if(level===5) return { prob:0.20, bonus:0.15 };
-      if(level===6) return { prob:0.20, bonus:0.20 };
-      if(level===7) return { prob:0.20, bonus:0.25 };
-      return { prob:0.20, bonus:Math.min(5.0, 0.25+(level-7)*0.05) };
+      const table = [
+        {prob:0.05, bonus:1.00},
+        {prob:0.10, bonus:1.00},
+        {prob:0.15, bonus:1.00},
+        {prob:0.20, bonus:1.00},
+        {prob:0.20, bonus:1.20},
+        {prob:0.20, bonus:1.30},
+        {prob:0.20, bonus:1.40},
+      ];
+      const base = table[level-1];
+      let bonus = base.bonus;
+      //7级以后每级+0.2，上限5.0（500%）
+      if(level>7){
+        bonus = 1.40 + (level-7)*0.20;
+      }
+      bonus = Math.min(5.0, bonus);
+      return { prob:base.prob, bonus };
     },
-    getDesc(level){ const d=this.data(level); return `伤害 ${(d.prob*100).toFixed(0)}% 暴击\n基础伤害 +${(d.bonus*100).toFixed(0)}%`; },
-    isMax(level){ return level>=7 && this.data(level).bonus>=5.0; }
+    getDesc(level){
+      const d=this.data(level);
+      return `伤害 ${(d.prob*100).toFixed(0)}% 暴击\n基础伤害 +${(d.bonus*100).toFixed(0)}%`;
+    }
   },
   execute: {
     id:'execute', name:'瞬杀', icon:'💀', type:'passive', maxLevel:7,
     data(level){
-      const baseProb=[0.05,0.10,0.15,0.20,0.25,0.30,0.35][level-1];
-      const round = Math.ceil(G.wave/3);
-      const bossPenalty = Math.max(0.04, baseProb - CFG.EXECUTE_BOSS_DECAY * round);
-      return { prob:baseProb, bossProb:bossPenalty };
+      const probTable = [0.01,0.03,0.05,0.7,0.1,0.12,0.15];
+      return { prob: probTable[level-1] };
     },
     getDesc(level){
-      const d=this.data(level);
-      return `小怪 ${(d.prob*100).toFixed(0)}% 秒杀\nBOSS仅 ${Math.max(0,(d.bossProb*100)).toFixed(0)}% 秒杀`;
+      return `对非BOSS ${(this.data(level).prob*100).toFixed(0)}% 秒杀`;
     }
   },
   luck: {
     id:'luck', name:'运气', icon:'🍀', type:'passive', maxLevel:Infinity,
     data(level){
-      if(level<=7) return { mult:1.50+(level-1)*0.05 };
-      return { mult:Math.min(2.0, 1.80+(level-7)*0.05) };
+      const table = [1.50,1.55,1.60,1.65,1.70,1.75,1.80];
+      let mult;
+      if(level<=7){
+        mult = table[level-1];
+      }else{
+        mult = 1.80 + (level-7)*0.05;
+      }
+      mult = Math.min(2.0, mult);
+      return { mult };
     },
-    getDesc(level){ return `所有被动概率 ×${this.data(level).mult.toFixed(2)}`; },
-    isMax(level){ return level>=7 && this.data(level).mult>=2.0; }
+    getDesc(level){
+      return `所有被动概率 ×${this.data(level).mult.toFixed(2)}`;
+    },
+    isMax(level){ return this.data(level).mult>=2.0; }
   },
   thunder: {
     id:'thunder', name:'天雷', icon:'⚡️', type:'passive', maxLevel:6,
-    // 大幅下调全等级落雷触发概率，解决全屏清场过强
     data(level){
-      const table=[
-        {prob:0.06,mult:1.0},{prob:0.11,mult:1.0},{prob:0.16,mult:1.0},
-        {prob:0.22,mult:1.0},{prob:0.22,mult:1.5},{prob:0.22,mult:2.0}
+      const table = [
+        {prob:0.06,mult:0.2},
+        {prob:0.11,mult:0.3},
+        {prob:0.16,mult:0.4},
+        {prob:0.20,mult:0.5},
+        {prob:0.20,mult:0.6},
+        {prob:0.20,mult:0.7}
       ];
       return table[level-1];
     },
-    getDesc(level){ const d=this.data(level); return `主动攻击 ${(d.prob*100).toFixed(0)}% 落雷\n全体敌人 平A×${d.mult} 伤害`; }
+    getDesc(level){
+      const d=this.data(level);
+      return `主动攻击 ${(d.prob*100).toFixed(0)}% 落雷\n全体敌人 平A×${d.mult} 伤害`;
+    }
   },
   chain: {
     id:'chain', name:'连锁', icon:'🔗', type:'passive', maxLevel:Infinity,
     data(level){
-      if(level<=7) return { radius:100+(level-1)*10 };
-      return { radius:Math.min(300, 160+(level-7)*10) };
+      const table = [100,110,120,130,140,150,160];
+      let radius;
+      if(level<=7){
+        radius = table[level-1];
+      }else{
+        radius = 160 + (level-7)*10;
+      }
+      radius = Math.min(300, radius);
+      return { radius, rate:0.70 }; //溅射伤害比例70%
     },
-    getDesc(level){ return `攻击溅射 ${this.data(level).radius}px\n周围敌人受 50% 伤害`; },
-    isMax(level){ return level>=7 && this.data(level).radius>=300; }
+    getDesc(level){
+      return `攻击溅射 ${this.data(level).radius}px\n周围敌人受 70% 伤害`;
+    },
+    isMax(level){ return this.data(level).radius>=300; }
   },
   freeze: {
     id:'freeze', name:'冻结', icon:'❄️', type:'passive', maxLevel:5,
-    // 小幅回调减速，前期容错提升
     data(level){
-      return { slow:[0.12,0.20,0.26,0.32,0.36][level-1] };
+      const slowTable = [0.30,0.40,0.50,0.60,0.70];
+      return { slow: slowTable[level-1] };
     },
-    getDesc(level){ return `被攻击敌人减速 ${(this.data(level).slow*100).toFixed(0)}%`; }
+    getDesc(level){
+      return `被攻击敌人减速 ${(this.data(level).slow*100).toFixed(0)}%，持续1.5秒`;
+    }
   },
   charge: {
     id:'charge', name:'蓄能', icon:'🔋', type:'passive', maxLevel:Infinity,
     data(level){
-      if(level<=5) return { bonus:[0.50,0.60,0.70,0.80,0.85][level-1] };
-      return { bonus:Math.min(0.92, 0.85+(level-5)*0.015) };
+      const table = [0.50,0.60,0.70,0.80,0.85];
+      let bonus;
+      if(level<=5){
+        bonus = table[level-1];
+      }else{
+        bonus = 0.85 + (level-5)*0.015;
+      }
+      bonus = Math.min(0.92, bonus);
+      return { bonus };
     },
-    getDesc(level){ const b=this.data(level).bonus; return `杀敌能量 +${(b*100).toFixed(0)}%\n每次获得 ${Math.floor(20*(1+b))} 点`; }
+    getDesc(level){
+      const b=this.data(level).bonus;
+      return `杀敌能量 +${(b*100).toFixed(1)}%\n每次获得 ${Math.floor(CFG.ENERGY_PER_KILL*(1+b))} 点`;
+    },
+    isMax(level){ return this.data(level).bonus>=0.92; }
   },
   healcard: {
     id:'healcard', name:'回复', icon:'💖', type:'special', maxLevel:1,
-    getDesc(){ return `立即回复 30% 最大生命值`; }
+    getDesc(){ return `立即回复50%最大生命值`; }
   }
 };
 
+// 卡池顺序（不含healcard特殊卡）
 const CARD_POOL = ['basic','aoe','thorns','heal','crit','execute','luck','thunder','chain','freeze','charge'];
 
 // ==================== 游戏状态 ====================
@@ -329,7 +408,7 @@ const G = {
   projectiles:[],
   effects:[],
   damageTexts:[],
-  levels:{},
+  levels:{}, // skillId -> level
   cooldowns:{ basic:0, aoe:0 },
   lockedTarget:null,
   autoMode:true,
@@ -344,6 +423,7 @@ const G = {
   cardTimer:0,
   currentCards:[],
   bossWarningTimer:0,
+  healCooldown:0, //回血技能3秒冷却
 };
 
 // ==================== 工具函数 ====================
@@ -364,10 +444,21 @@ function isSkillMaxed(id){
 
 // ==================== 玩家 ====================
 function createPlayer(){
-  return { x:CFG.PLAYER_X, y:CFG.PLAYER_Y, hp:CFG.PLAYER_MAX_HP, maxHp:CFG.PLAYER_MAX_HP, r:CFG.PLAYER_R, hitFlash:0 };
+  return {
+    x:CFG.PLAYER_X,
+    y:CFG.PLAYER_Y,
+    baseMaxHp:CFG.PLAYER_BASE_MAX_HP,
+    hpBonusPct:0, //回血技能带来本局永久血量加成
+    hp:CFG.PLAYER_BASE_MAX_HP,
+    get maxHp(){
+      return Math.floor(this.baseMaxHp * (1 + this.hpBonusPct));
+    },
+    r:CFG.PLAYER_R,
+    hitFlash:0
+  };
 }
 
-// ==================== 怪物生成（分段倍率优化，消除前期暴毙断层） ====================
+// ==================== 怪物 ====================
 const MONSTER_TYPES = [
   {name:'赤焰魔', color:'#ff4444', eye:'#ffaa00'},
   {name:'寒冰鬼', color:'#44aaff', eye:'#aaddff'},
@@ -378,31 +469,19 @@ const MONSTER_TYPES = [
 
 function spawnMonster(isBoss){
   const round = Math.ceil(G.wave/3);
-  let mult;
-  // 分段倍率重新调校：前期增长平缓、中期适度压力、8轮后陡峭
-  if(round <= 3) mult = Math.pow(1.18, round-1);
-  else if(round <=5) mult = Math.pow(1.26, round-1);
-  else if(round <=7) mult = Math.pow(1.36, round-1);
-  else mult = Math.pow(1.52, round-1);
-
+  const mult = Math.pow(CFG.HP_MULT_PER_ROUND, round-1);
   const type = MONSTER_TYPES[randi(0,4)];
   let x,y;
   const side = randi(0,2);
   if(side===0){ x=rand(40,CFG.W-40); y=-30; }
   else if(side===1){ x=-30; y=rand(40,CFG.H*0.6); }
   else { x=CFG.W+30; y=rand(40,CFG.H*0.6); }
-
   const baseHp = CFG.MONSTER_BASE_HP*mult;
-  let baseAtk = CFG.MONSTER_BASE_ATK*mult;
-  if(isBoss){
-    const bossAtkBonus = CFG.BOSS_ATK_MULT_BASE + CFG.BOSS_ATK_MULT_PER_ROUND * round;
-    baseAtk *= bossAtkBonus;
-  }
-
+  const baseAtk = CFG.MONSTER_BASE_ATK*mult;
   const m = {
     x,y, type, isBoss,
-    hp: isBoss? baseHp*3 : baseHp,
-    maxHp: isBoss? baseHp*3 : baseHp,
+    hp: isBoss? baseHp*5 : baseHp,
+    maxHp: isBoss? baseHp*5 : baseHp,
     atk: baseAtk,
     speed: CFG.MONSTER_SPEED,
     r: isBoss? 32 : 18,
@@ -414,10 +493,12 @@ function spawnMonster(isBoss){
   G.monsters.push(m);
 }
 
-// ==================== 伤害数字、特效 ====================
+// ==================== 伤害数字 ====================
 function addDamageText(x,y,text,color){
   G.damageTexts.push({x,y,text,color,life:0.8,vy:-40});
 }
+
+// ==================== 特效 ====================
 function addEffect(x,y,type,extra){
   G.effects.push({x,y,type,life:0.4,maxLife:0.4,...extra});
 }
@@ -429,6 +510,7 @@ function dealDamage(monster, baseDmg, opts={}){
   let dmg = baseDmg;
   let isCrit=false, isExec=false;
 
+  // 暴击
   if(getLevel('crit')>0){
     const c=SKILLS.crit.data(getLevel('crit'));
     if(Math.random()<c.prob*luckMult){
@@ -437,16 +519,10 @@ function dealDamage(monster, baseDmg, opts={}){
     }
   }
 
+  // 瞬杀（非BOSS）
   if(!monster.isBoss && getLevel('execute')>0){
     const e=SKILLS.execute.data(getLevel('execute'));
     if(Math.random()<e.prob*luckMult){
-      dmg = monster.hp;
-      isExec=true;
-    }
-  }
-  if(monster.isBoss && getLevel('execute')>0){
-    const e=SKILLS.execute.data(getLevel('execute'));
-    if(Math.random()<e.bossProb*luckMult){
       dmg = monster.hp;
       isExec=true;
     }
@@ -455,35 +531,41 @@ function dealDamage(monster, baseDmg, opts={}){
   monster.hp -= dmg;
   monster.hitFlash=0.15;
 
+  // 冻结
   if(getLevel('freeze')>0){
     const f=SKILLS.freeze.data(getLevel('freeze'));
     monster.slowTimer=1.5;
     monster.slowAmount=f.slow;
   }
 
+  // 连锁溅射70%伤害
   if(getLevel('chain')>0 && !opts.fromChain){
     const ch=SKILLS.chain.data(getLevel('chain'));
     for(const other of G.monsters){
       if(other===monster || other.hp<=0) continue;
       if(dist(monster.x,monster.y,other.x,other.y)<=ch.radius){
-        dealDamage(other, dmg*0.5, {fromChain:true});
+        dealDamage(other, dmg*ch.rate, {fromChain:true});
       }
     }
   }
 
+  // 伤害数字
   if(isExec) addDamageText(monster.x, monster.y-20, '秒杀!', '#ff3333');
   else if(isCrit) addDamageText(monster.x, monster.y-20, Math.ceil(dmg), '#ffdd44');
   else addDamageText(monster.x, monster.y-16, Math.ceil(dmg), '#ffffff');
 
-  if(opts.isActive && getLevel('heal')>0){
+  // 回血（主动攻击触发，带3秒冷却）
+  if(opts.isActive && getLevel('heal')>0 && G.healCooldown<=0){
     const h=SKILLS.heal.data(getLevel('heal'));
     if(Math.random()<h.prob*luckMult){
-      const healAmt = G.player.maxHp*h.amt;
+      const healAmt = G.player.maxHp*h.amtPct;
       G.player.hp = Math.min(G.player.maxHp, G.player.hp+healAmt);
       addDamageText(G.player.x, G.player.y-30, '+'+Math.ceil(healAmt), '#55ff77');
+      G.healCooldown = CFG.HEAL_SKILL_COOLDOWN;
     }
   }
 
+  // 天雷（主动攻击触发）
   if(opts.isActive && getLevel('thunder')>0){
     const t=SKILLS.thunder.data(getLevel('thunder'));
     if(Math.random()<t.prob*luckMult){
@@ -503,6 +585,7 @@ function dealDamage(monster, baseDmg, opts={}){
 }
 
 function killMonster(monster){
+  // 能量
   let energyGain = CFG.ENERGY_PER_KILL;
   if(getLevel('charge')>0){
     energyGain = Math.floor(CFG.ENERGY_PER_KILL*(1+SKILLS.charge.data(getLevel('charge')).bonus));
@@ -515,26 +598,29 @@ function killMonster(monster){
   if(G.combo>G.maxCombo) G.maxCombo=G.combo;
 
   addEffect(monster.x, monster.y, 'death', {color:monster.type.color, r:monster.r});
+
   if(G.lockedTarget===monster) G.lockedTarget=null;
 
+  // 检查能量满
   if(G.energy>=G.energyMax && !G.cardModalOpen){
     triggerCardModal();
   }
 }
 
-// 玩家受伤
+// 玩家受击
 function playerTakeDamage(amount){
   G.player.hp -= amount;
   G.player.hitFlash=0.2;
   G.combo=0;
   addDamageText(G.player.x, G.player.y-30, '-'+Math.ceil(amount), '#ff5555');
 
+  // 反伤：反弹伤害，**不参与暴击计算**，直接取平A原始基础伤害
   if(getLevel('thorns')>0){
     const t=SKILLS.thorns.data(getLevel('thorns'));
     const luckMult = getLevel('luck')>0 ? SKILLS.luck.data(getLevel('luck')).mult : 1;
     if(Math.random()<t.prob*luckMult){
-      const basicDmg = SKILLS.basic.data(getLevel('basic')||1).dmg;
-      const reflectDmg = basicDmg*t.mult;
+      const basicRawDmg = SKILLS.basic.data(getLevel('basic')||1).dmg;
+      const reflectDmg = basicRawDmg*t.mult;
       let nearest=null, nd=Infinity;
       for(const m of G.monsters){
         if(m.hp<=0) continue;
@@ -591,7 +677,7 @@ function doAoeAttack(){
   const shuffled = inRange.sort(()=>Math.random()-0.5).slice(0, d.n);
   addEffect(target.x, target.y, 'aoe', {radius:d.r});
   for(const m of shuffled){
-    dealDamage(m, d.dmg, {isActive:true});
+    dealDamage(m, d.d, {isActive:true});
   }
   return true;
 }
@@ -601,15 +687,8 @@ function triggerCardModal(){
   G.cardModalOpen=true;
   G.paused=true;
   G.cardTimer=CFG.CARD_TIMEOUT;
-  const round = Math.ceil(G.wave/3);
   const available = CARD_POOL.filter(id=>!isSkillMaxed(id));
-  let pool = [...available];
-  let addHealCard = true;
-  if(round >=4 && round <=5) addHealCard = Math.random()>0.42;
-  if(round >=6 && round <=7) addHealCard = Math.random()>0.68;
-  if(round >=8) addHealCard = Math.random()>0.88;
-  if(addHealCard) pool.push('healcard');
-
+  const pool = [...available, 'healcard'];
   const shuffled = pool.sort(()=>Math.random()-0.5);
   G.currentCards = shuffled.slice(0, Math.min(3, pool.length));
   renderCardModal();
@@ -624,7 +703,7 @@ function renderCardModal(){
     const lv=getLevel(id);
     const nextLv = id==='healcard' ? 1 : lv+1;
     const desc = id==='healcard' ? s.getDesc() : s.getDesc(nextLv);
-    const levelText = id==='healcard' ? '永久可用' : (lv===0? '新技能' : `Lv${lv} → Lv${nextLv}`);
+    const levelText = id==='healcard' ? '特殊道具' : (lv===0? '新技能' : `Lv${lv} → Lv${nextLv}`);
     const div=document.createElement('div');
     div.className='card';
     div.innerHTML=`
@@ -645,7 +724,13 @@ function selectCard(id){
     G.player.hp=Math.min(G.player.maxHp, G.player.hp+healAmt);
     addDamageText(G.player.x, G.player.y-40, '+'+Math.ceil(healAmt), '#ff88cc');
   } else {
-    G.levels[id] = (G.levels[id]||0)+1;
+    const newLv = (G.levels[id]||0)+1;
+    G.levels[id] = newLv;
+    //回血技能升级，立刻应用本局血量上限加成
+    if(id === 'heal'){
+      const hData = SKILLS.heal.data(newLv);
+      G.player.hpBonusPct = hData.hpBonusPct;
+    }
   }
   G.energy=0;
   G.cardModalOpen=false;
@@ -653,53 +738,13 @@ function selectCard(id){
   document.getElementById('cardModal').classList.remove('show');
 }
 
-// ==================== 新增：技能图鉴弹窗渲染逻辑 ====================
-function openSkillBook(){
-  const wrap = document.getElementById('skillListWrap');
-  wrap.innerHTML = '';
-  // 遍历全技能展示，0级也显示
-  for(const sid in SKILLS){
-    const sk = SKILLS[sid];
-    const lv = getLevel(sid);
-    let descStr;
-    if(sid === 'healcard'){
-      descStr = sk.getDesc();
-    }else{
-      descStr = sk.getDesc(lv || 1);
-    }
-    const item = document.createElement('div');
-    item.className = 'skill-item';
-    item.innerHTML = `
-      <div class="skill-item-top">
-        <span class="skill-icon">${sk.icon}</span>
-        <div class="skill-name-lv">
-          <div class="skill-name">${sk.name}</div>
-          <div class="skill-lv">Lv.${lv} ${lv===0?'(未解锁)':''}</div>
-        </div>
-      </div>
-      <div class="skill-desc">${descStr}</div>
-    `;
-    wrap.appendChild(item);
-  }
-  document.getElementById('skillBookModal').classList.add('show');
-}
-function closeSkillBook(){
-  document.getElementById('skillBookModal').classList.remove('show');
-}
-
-// ==================== 波次管理（修复怪物数量计算BUG） ====================
+// ==================== 波次管理 ====================
 function startWave(){
   G.betweenWaves=false;
   G.waveKilled=0;
-  const round = Math.ceil(G.wave/3);
-  let addNum;
-  if(round <=3) addNum = 1;
-  else if(round <=5) addNum = 2;
-  else addNum = 4;
-  // 修复原数量计算误差，准确计算总怪物
-  const baseCount = CFG.FIRST_WAVE_COUNT + addNum*(G.wave-1);
+  const count = CFG.FIRST_WAVE_COUNT + CFG.COUNT_PER_WAVE_ADD*(G.wave-1);
   const isBossWave = G.wave%3===0;
-  G.waveTotal = baseCount + (isBossWave ? 1 : 0);
+  G.waveTotal = count + (isBossWave?1:0);
   G.spawnQueue = G.waveTotal;
   G.spawnTimer = CFG.SPAWN_DELAY;
   if(isBossWave){
@@ -715,13 +760,14 @@ function endWave(){
   G.energyMax = Math.floor(G.energyMax*CFG.ENERGY_GROWTH);
   document.getElementById('waveCountdown').style.display='block';
 }
+
 function nextWave(){
   G.wave++;
   document.getElementById('waveCountdown').style.display='none';
   startWave();
 }
 
-// ==================== 主循环 ====================
+// ==================== 游戏主循环 ====================
 let lastTime=0, rafId=0;
 function loop(ts){
   if(!G.running){ rafId=0; return; }
@@ -733,6 +779,9 @@ function loop(ts){
 }
 
 function update(dt){
+  //回血技能冷却计时
+  if(G.healCooldown>0) G.healCooldown -= dt;
+
   if(G.comboTimer>0){ G.comboTimer-=dt; if(G.comboTimer<=0) G.combo=0; }
   if(G.bossWarningTimer>0){ G.bossWarningTimer-=dt; if(G.bossWarningTimer<=0) document.getElementById('bossWarning').style.display='none'; }
 
@@ -752,8 +801,7 @@ function update(dt){
 
   if(G.spawnQueue>0){
     G.spawnTimer-=dt;
-    const aliveCount = G.monsters.filter(m=>m.hp>0).length;
-    if(G.spawnTimer<=0 && aliveCount<CFG.MAX_ON_SCREEN){
+    if(G.spawnTimer<=0 && G.monsters.filter(m=>m.hp>0).length<CFG.MAX_ON_SCREEN){
       const isBossWave = G.wave%3===0;
       const isBoss = isBossWave && G.spawnQueue===1;
       spawnMonster(isBoss);
@@ -762,11 +810,9 @@ function update(dt){
     }
   }
 
-  // 同屏提示
-  const aliveNow = G.monsters.filter(m=>m.hp>0).length;
-  document.getElementById('capWarning').style.display = (aliveNow>=CFG.MAX_ON_SCREEN && G.spawnQueue>0)?'block':'none';
+  const aliveCount=G.monsters.filter(m=>m.hp>0).length;
+  document.getElementById('capWarning').style.display = (aliveCount>=CFG.MAX_ON_SCREEN && G.spawnQueue>0)?'block':'none';
 
-  // 怪物AI
   for(const m of G.monsters){
     if(m.hp<=0) continue;
     if(m.hitFlash>0) m.hitFlash-=dt;
@@ -785,7 +831,6 @@ function update(dt){
       }
     }
   }
-
   G.monsters=G.monsters.filter(m=>m.hp>0 || m.hitFlash>0);
   G.monsters=G.monsters.filter(m=>m.hp>0);
 
@@ -801,9 +846,7 @@ function update(dt){
   updateEffects(dt);
   updateDamageTexts(dt);
 
-  // 波次结束判定
-  const aliveLeft = G.monsters.filter(m=>m.hp>0).length;
-  if(G.spawnQueue<=0 && aliveLeft===0 && !G.betweenWaves){
+  if(G.spawnQueue<=0 && G.monsters.filter(m=>m.hp>0).length===0 && !G.betweenWaves){
     endWave();
   }
 
@@ -828,10 +871,12 @@ function updateProjectiles(dt){
   }
   G.projectiles=G.projectiles.filter(p=>!p.dead);
 }
+
 function updateEffects(dt){
   for(const e of G.effects){ e.life-=dt; }
   G.effects=G.effects.filter(e=>e.life>0);
 }
+
 function updateDamageTexts(dt){
   for(const t of G.damageTexts){
     t.life-=dt;
@@ -861,11 +906,13 @@ window.addEventListener('resize', resizeCanvas);
 
 function render(){
   ctx.clearRect(0,0,CFG.W,CFG.H);
+  // 背景网格
   ctx.strokeStyle='rgba(80,60,120,.08)';
   ctx.lineWidth=1;
   for(let x=0;x<CFG.W;x+=40){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,CFG.H); ctx.stroke(); }
   for(let y=0;y<CFG.H;y+=40){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(CFG.W,y); ctx.stroke(); }
 
+  // 玩家攻击范围指示（锁定时）
   if(G.lockedTarget && G.lockedTarget.hp>0){
     ctx.strokeStyle='rgba(255,200,80,.4)';
     ctx.lineWidth=2;
@@ -875,28 +922,39 @@ function render(){
     ctx.lineTo(G.lockedTarget.x,G.lockedTarget.y);
     ctx.stroke();
     ctx.setLineDash([]);
+    // 锁定圈
     ctx.strokeStyle='rgba(255,200,80,.7)';
     ctx.beginPath();
     ctx.arc(G.lockedTarget.x,G.lockedTarget.y,G.lockedTarget.r+8,0,Math.PI*2);
     ctx.stroke();
   }
 
+  // 怪物
   for(const m of G.monsters){
     if(m.hp<=0) continue;
     drawMonster(m);
   }
+
+  // 玩家
   drawPlayer();
 
+  // 弹道
   for(const p of G.projectiles){
     ctx.fillStyle='#ffdd66';
     ctx.shadowColor='#ffaa00';
     ctx.shadowBlur=12;
-    ctx.beginPath(); ctx.arc(p.x,p.y,5,0,Math.PI*2); ctx.fill();
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,5,0,Math.PI*2);
+    ctx.fill();
     ctx.shadowBlur=0;
   }
 
-  for(const e of G.effects) drawEffect(e);
+  // 特效
+  for(const e of G.effects){
+    drawEffect(e);
+  }
 
+  // 伤害数字
   for(const t of G.damageTexts){
     ctx.globalAlpha=clamp(t.life/0.8,0,1);
     ctx.fillStyle=t.color;
@@ -909,6 +967,7 @@ function render(){
     ctx.globalAlpha=1;
   }
 
+  // combo
   if(G.combo>=3){
     ctx.fillStyle='rgba(255,200,80,.8)';
     ctx.font='bold 28px sans-serif';
@@ -919,19 +978,23 @@ function render(){
 
 function drawPlayer(){
   const p=G.player;
+  // 光环
   const grad=ctx.createRadialGradient(p.x,p.y,5,p.x,p.y,50);
   grad.addColorStop(0,'rgba(100,150,255,.3)');
   grad.addColorStop(1,'rgba(100,150,255,0)');
   ctx.fillStyle=grad;
   ctx.beginPath(); ctx.arc(p.x,p.y,50,0,Math.PI*2); ctx.fill();
+  // 身体
   ctx.fillStyle = p.hitFlash>0 ? '#ffffff' : '#5588ff';
   ctx.shadowColor='#4488ff';
   ctx.shadowBlur=16;
   ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
   ctx.shadowBlur=0;
+  // 护甲
   ctx.strokeStyle='#88bbff';
   ctx.lineWidth=3;
   ctx.beginPath(); ctx.arc(p.x,p.y,p.r-4,0,Math.PI*2); ctx.stroke();
+  // 眼睛
   ctx.fillStyle='#fff';
   ctx.beginPath(); ctx.arc(p.x-6,p.y-3,3,0,Math.PI*2); ctx.fill();
   ctx.beginPath(); ctx.arc(p.x+6,p.y-3,3,0,Math.PI*2); ctx.fill();
@@ -941,10 +1004,12 @@ function drawPlayer(){
 }
 
 function drawMonster(m){
+  // 减速效果
   if(m.slowTimer>0){
     ctx.fillStyle='rgba(100,180,255,.2)';
     ctx.beginPath(); ctx.arc(m.x,m.y,m.r+6,0,Math.PI*2); ctx.fill();
   }
+  // BOSS光环
   if(m.isBoss){
     const grad=ctx.createRadialGradient(m.x,m.y,m.r,m.x,m.y,m.r+20);
     grad.addColorStop(0,'rgba(255,50,50,.4)');
@@ -952,23 +1017,28 @@ function drawMonster(m){
     ctx.fillStyle=grad;
     ctx.beginPath(); ctx.arc(m.x,m.y,m.r+20,0,Math.PI*2); ctx.fill();
   }
+  // 身体
   ctx.fillStyle = m.hitFlash>0 ? '#fff' : m.type.color;
   ctx.shadowColor=m.type.color;
   ctx.shadowBlur= m.isBoss?16:8;
   ctx.beginPath(); ctx.arc(m.x,m.y,m.r,0,Math.PI*2); ctx.fill();
   ctx.shadowBlur=0;
+  // 轮廓
   ctx.strokeStyle='rgba(0,0,0,.5)';
   ctx.lineWidth=2;
   ctx.beginPath(); ctx.arc(m.x,m.y,m.r,0,Math.PI*2); ctx.stroke();
+  // 眼睛
   ctx.fillStyle=m.type.eye;
   ctx.beginPath(); ctx.arc(m.x-m.r*0.3,m.y-m.r*0.15,m.r*0.18,0,Math.PI*2); ctx.fill();
   ctx.beginPath(); ctx.arc(m.x+m.r*0.3,m.y-m.r*0.15,m.r*0.18,0,Math.PI*2); ctx.fill();
+  // 血条
   const bw=m.r*2, bh=4;
   const bx=m.x-bw/2, by=m.y-m.r-10;
   ctx.fillStyle='rgba(0,0,0,.6)';
   ctx.fillRect(bx,by,bw,bh);
   ctx.fillStyle= m.isBoss? '#ff4444' : '#66dd66';
   ctx.fillRect(bx,by,bw*(m.hp/m.maxHp),bh);
+  // BOSS标识
   if(m.isBoss){
     ctx.fillStyle='#ff3333';
     ctx.font='bold 10px sans-serif';
@@ -993,6 +1063,7 @@ function drawEffect(e){
     ctx.beginPath(); ctx.arc(e.x,e.y,e.radius,0,Math.PI*2); ctx.fill();
     ctx.globalAlpha=1;
   } else if(e.type==='thunder'){
+    // 全屏闪
     ctx.globalAlpha=(1-t)*0.3;
     ctx.fillStyle='#88ccff';
     ctx.fillRect(0,0,CFG.W,CFG.H);
@@ -1010,13 +1081,12 @@ function drawEffect(e){
   }
 }
 
-// ==================== HUD（修复击杀数量显示错误） ====================
+// ==================== HUD更新 ====================
 function updateHUD(){
   const round=Math.ceil(G.wave/3);
   const waveInRound=((G.wave-1)%3)+1;
   document.getElementById('waveInfo').textContent=`第${round}轮 · 第${waveInRound}波 (总第${G.wave}波)`;
-  const aliveNow = G.monsters.filter(m=>m.hp>0).length;
-  document.getElementById('killInfo').textContent=`击杀 ${G.waveKilled}/${G.waveTotal} · 场上 ${aliveNow}`;
+  document.getElementById('killInfo').textContent=`击杀 ${G.waveKilled}/${G.waveTotal} · 场上 ${G.monsters.filter(m=>m.hp>0).length}`;
   const hpPct=G.player.hp/G.player.maxHp*100;
   document.getElementById('hpBar').style.width=hpPct+'%';
   document.getElementById('hpLabel').textContent=`${Math.ceil(G.player.hp)} / ${G.player.maxHp}`;
@@ -1035,6 +1105,7 @@ function gameOver(){
   document.getElementById('overCombo').textContent=`最高连杀：${G.maxCombo}`;
   const dur=Math.floor((Date.now()-G.startTime)/1000);
   document.getElementById('overTime').textContent=`存活时间：${Math.floor(dur/60)}分${dur%60}秒`;
+  // 技能一览
   const skillParts=[];
   for(const id of CARD_POOL){
     const lv=getLevel(id);
@@ -1052,7 +1123,7 @@ function initGame(){
   G.energy=0; G.energyMax=CFG.ENERGY_BASE;
   G.player=createPlayer();
   G.monsters=[]; G.projectiles=[]; G.effects=[]; G.damageTexts=[];
-  G.levels={ basic:1 };
+  G.levels={ basic:1 }; // 初始平A Lv1
   G.cooldowns={ basic:0, aoe:0 };
   G.lockedTarget=null;
   G.autoMode=true;
@@ -1060,7 +1131,6 @@ function initGame(){
   G.betweenWaves=false; G.cardModalOpen=false;
   document.getElementById('overModal').classList.remove('show');
   document.getElementById('cardModal').classList.remove('show');
-  document.getElementById('skillBookModal').classList.remove('show');
   document.getElementById('bossWarning').style.display='none';
   document.getElementById('waveCountdown').style.display='none';
   document.getElementById('btnAuto').classList.add('active');
@@ -1070,15 +1140,13 @@ function initGame(){
   rafId=requestAnimationFrame(loop);
 }
 
-// ==================== 事件绑定（新增图鉴按钮） ====================
+// ==================== 事件绑定 ====================
 document.getElementById('startBtn').onclick=()=>{
   document.getElementById('startModal').classList.add('hide');
   resizeCanvas();
   initGame();
 };
 document.getElementById('restartBtn').onclick=()=>{ initGame(); };
-document.getElementById('closeSkillBook').onclick=closeSkillBook;
-document.getElementById('btnSkillBook').onclick=openSkillBook;
 
 document.getElementById('btnAuto').onclick=()=>{
   G.autoMode=!G.autoMode;
@@ -1106,18 +1174,20 @@ document.addEventListener('keydown',e=>{
   if(e.ctrlKey && e.key==='z'){ e.preventDefault(); G.autoMode=!G.autoMode; document.getElementById('btnAuto').classList.toggle('active',G.autoMode); }
 });
 
-// 抽卡倒计时
+// 抽卡超时
 setInterval(()=>{
   if(G.cardModalOpen){
     G.cardTimer-=0.1;
     document.getElementById('cardTimer').textContent=`剩余选择时间：${Math.max(0,Math.ceil(G.cardTimer))}s`;
     if(G.cardTimer<=0){
+      // 随机选一张
       const id=G.currentCards[randi(0,G.currentCards.length-1)];
       selectCard(id);
     }
   }
 },100);
 
+// 初始
 resizeCanvas();
 </script>
 </body>
