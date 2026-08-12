@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+
+<title>深渊守卫</title>
+
+<style>
+
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; }
+  html, body { width:100%; height:100%; background:#0a0a12; overflow:hidden; font-family:"Microsoft YaHei","PingFang SC",sans-serif; color:#e0e0e0; }
+  #gameWrap { position:relative; width:100%; height:100%; display:flex; align-items:center; justify-content:center; }
+  #gameCanvas { background:linear-gradient(180deg,#0d0d1a 0%,#1a0a1e 60%,#0a0a12 100%); display:block; touch-action:none; }
+
+  /* HUD */
+  #hud { position:absolute; top:0; left:0; right:0; padding:8px 12px; pointer-events:none; z-index:10; }
+  .hud-row { display:flex; justify-content:space-between; align-items:center; font-size:13px; text-shadow:0 0 4px #000; margin-bottom:4px; }
+  .hud-row span { background:rgba(0,0,0,.4); padding:2px 8px; border-radius:6px; }
+  .bar-wrap { width:100%; height:14px; background:rgba(0,0,0,.5); border-radius:7px; overflow:hidden; margin-bottom:4px; border:1px solid rgba(255,255,255,.15); }
+  #hpBar { height:100%; background:linear-gradient(90deg,#ff3b3b,#ff7b7b); transition:width .15s; width:100%; }
+  #energyBar { height:100%; background:linear-gradient(90deg,#2b7bff,#6bb3ff); transition:width .1s; width:0%; }
+  .bar-label { position:relative; top:-13px; text-align:center; font-size:10px; line-height:14px; text-shadow:0 0 3px #000; font-weight:bold; }
+
+  /* bottom buttons 扩容1个按钮给技能图鉴 */
+  #bottomBar { position:absolute; bottom:0; left:0; right:0; display:flex; gap:4px; padding:8px 8px 12px; z-index:10; background:linear-gradient(0deg,rgba(0,0,0,.7),transparent); }
+  .btn { flex:1; padding:10px 2px; background:rgba(40,40,60,.85); border:1px solid rgba(255,255,255,.2); border-radius:10px; font-size:11px; text-align:center; cursor:pointer; transition:all .1s; color:#ddd; }
+  .btn:active, .btn.active { background:rgba(80,120,255,.8); border-color:#8af; transform:scale(.95); }
+  .btn .icon { font-size:18px; display:block; margin-bottom:2px; }
+  .btn .cd { position:absolute; font-size:10px; color:#ff9; }
+
+  /* card modal */
+  #cardModal { position:absolute; inset:0; background:rgba(0,0,0,.82); display:none; flex-direction:column; align-items:center; justify-content:center; z-index:50; padding:20px; }
+  #cardModal.show { display:flex; }
+  #cardTitle { font-size:22px; color:#ffd966; margin-bottom:6px; text-shadow:0 0 12px rgba(255,200,80,.6); }
+  #cardSub { font-size:13px; color:#aaa; margin-bottom:18px; }
+  #cardTimer { font-size:14px; color:#ff9; margin-bottom:14px; }
+  #cardList { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; max-width:100%; }
+  .card { width:150px; min-height:210px; background:linear-gradient(160deg,#1e1e3a,#2a1a3a); border:2px solid #556; border-radius:14px; padding:14px 10px; cursor:pointer; transition:all .15s; display:flex; flex-direction:column; align-items:center; text-align:center; }
+  .card:hover, .card:active { border-color:#ffd966; transform:translateY(-4px); box-shadow:0 6px 24px rgba(255,200,80,.35); }
+  .card .c-icon { font-size:38px; margin-bottom:6px; }
+  .card .c-name { font-size:15px; font-weight:bold; color:#fff; margin-bottom:4px; }
+  .card .c-level { font-size:11px; color:#8af; margin-bottom:8px; }
+  .card .c-desc { font-size:11px; color:#bbb; line-height:1.5; flex:1; }
+
+  /* 技能图鉴弹窗新增 */
+  #skillBookModal { position:absolute; inset:0; background:rgba(0,0,0,.88); display:none; flex-direction:column; z-index:80; padding:16px; overflow:auto; }
+  #skillBookModal.show { display:flex; }
+  .skillbook-head { display:flex; justify-content:space-between; align-items:center; width:100%; max-width:600px; margin:0 auto 12px; }
+  .skillbook-title { font-size:24px; color:#ffd966; }
+  #closeSkillBook { padding:6px 16px; background:#ff5555; border:none; border-radius:8px; color:#fff; cursor:pointer; }
+  #skillListWrap { width:100%; max-width:600px; margin:0 auto; display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+  .skill-item { width:170px; background:#1c1c36; border:1px solid #557; border-radius:10px; padding:10px; }
+  .skill-item-top { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+  .skill-icon { font-size:26px; }
+  .skill-name-lv { display:flex; flex-direction:column; }
+  .skill-name { font-weight:bold; color:#fff; }
+  .skill-lv { font-size:12px; color:#8cf; }
+  .skill-desc { font-size:11px; color:#ccc; line-height:1.4; white-space:pre-line; }
+
+  /* countdown */
+  #waveCountdown { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:72px; font-weight:bold; color:#ffd966; text-shadow:0 0 24px rgba(255,200,80,.8); z-index:20; display:none; }
+
+  /* game over */
+  #overModal { position:absolute; inset:0; background:rgba(0,0,0,.9); display:none; flex-direction:column; align-items:center; justify-content:center; z-index:60; padding:20px; }
+  #overModal.show { display:flex; }
+  #overTitle { font-size:32px; color:#ff5555; margin-bottom:18px; text-shadow:0 0 16px rgba(255,60,60,.6); }
+  .over-stat { font-size:15px; color:#ddd; margin:4px 0; }
+  .over-skills { margin-top:14px; max-width:320px; font-size:12px; color:#aaa; text-align:center; line-height:1.7; }
+  #restartBtn { margin-top:22px; padding:12px 36px; background:linear-gradient(90deg,#4a6cf7,#6b8cff); border:none; border-radius:24px; color:#fff; font-size:16px; cursor:pointer; }
+  #restartBtn:active { transform:scale(.95); }
+
+  /* start screen */
+  #startModal { position:absolute; inset:0; background:linear-gradient(180deg,#0a0a1a,#1a0a2a); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:70; padding:20px; }
+  #startModal.hide { display:none; }
+  #startTitle { font-size:40px; font-weight:bold; background:linear-gradient(90deg,#ffd966,#ff6b9d,#6bb3ff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:8px; letter-spacing:4px; }
+  #startSub { font-size:14px; color:#888; margin-bottom:30px; }
+  #startBtn { padding:14px 48px; background:linear-gradient(90deg,#4a6cf7,#8a5cf7); border:none; border-radius:28px; color:#fff; font-size:18px; cursor:pointer; box-shadow:0 4px 20px rgba(100,100,255,.5); }
+  #startBtn:active { transform:scale(.95); }
+  .start-tip { font-size:12px; color:#666; margin-top:24px; text-align:center; line-height:1.8; max-width:300px; }
+
+  /* boss warning */
+  #bossWarning { position:absolute; top:30%; left:0; right:0; text-align:center; font-size:28px; color:#ff3333; text-shadow:0 0 16px #f00; z-index:15; display:none; animation:pulse .5s infinite alternate; }
+  @keyframes pulse { from{opacity:.5;transform:scale(.95);} to{opacity:1;transform:scale(1.05);} }
+  #capWarning { position:absolute; top:80px; left:50%; transform:translateX(-50%); font-size:12px; color:#ff5555; background:rgba(80,0,0,.7); padding:4px 12px; border-radius:10px; z-index:11; display:none; }
+</style>
+
+</head>
+
+<body>
+<div id="gameWrap">
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div class="hud-row">
+      <span id="waveInfo">第1轮 · 第1波</span>
+      <span id="killInfo">击杀 0/15</span>
+    </div>
+    <div class="bar-wrap"><div id="hpBar"></div></div>
+    <div class="bar-label" id="hpLabel">100 / 100</div>
+    <div class="bar-wrap"><div id="energyBar"></div></div>
+    <div class="bar-label" id="energyLabel">0 / 100</div>
+  </div>
+
+  <div id="capWarning">⚠ 同屏已满，后备怪物待刷</div>
+  <div id="bossWarning">⚠ BOSS 来袭 ⚠</div>
+  <div id="waveCountdown"></div>
+
+  <!-- 底部按钮 新增技能图鉴btnSkillBook -->
+  <div id="bottomBar">
+    <div class="btn active" id="btnAuto"><span class="icon">🤖</span>自动</div>
+    <div class="btn" id="btnAttack"><span class="icon">⚔️</span>平A</div>
+    <div class="btn" id="btnAoe"><span class="icon">💥</span>群攻</div>
+    <div class="btn" id="btnLock"><span class="icon">🎯</span>锁定</div>
+    <div class="btn" id="btnSkillBook"><span class="icon">📖</span>图鉴</div>
+  </div>
+
+  <!-- 抽卡弹窗 -->
+  <div id="cardModal">
+    <div id="cardTitle">⚡ 能量充盈 · 技能抽取</div>
+    <div id="cardSub">选择一张技能强化自身</div>
+    <div id="cardTimer">剩余选择时间：15s</div>
+    <div id="cardList"></div>
+  </div>
+
+  <!-- 新增：技能图鉴弹窗 -->
+  <div id="skillBookModal">
+    <div class="skillbook-head">
+      <div class="skillbook-title">全部技能图鉴</div>
+      <button id="closeSkillBook">关闭</button>
+    </div>
+    <div id="skillListWrap"></div>
+  </div>
+
+  <!-- 波次倒计时 -->
+  <div id="waveCountdown"></div>
+
+  <!-- 游戏结束 -->
+  <div id="overModal">
+    <div id="overTitle">💀 守卫陨落</div>
+    <div class="over-stat" id="overWave"></div>
+    <div class="over-stat" id="overKill"></div>
+    <div class="over-stat" id="overCombo"></div>
+    <div class="over-stat" id="overTime"></div>
+    <div class="over-skills" id="overSkills"></div>
+    <button id="restartBtn">重新挑战</button>
+  </div>
+
+  <!-- 开始界面 -->
+  <div id="startModal">
+    <div id="startTitle">深渊守卫</div>
+    <div id="startSub">Roguelike 技能构筑 · 无限生存</div>
+    <button id="startBtn">开始守卫</button>
+    <div class="start-tip">
+      击杀敌人积累能量，满后三选一抽卡强化<br>
+      每3波一轮，BOSS在每轮末出现<br>
+      自动模式下自动战斗，抽卡时暂停<br>
+      键盘：1/2 切换技能 · Tab 锁定 · Ctrl+Z 自动
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== 配置常量（心流难度重新调校，消除8波暴毙，平滑梯度） ====================
+const CFG = {
+  W: 540, H: 960,
+  PLAYER_X: 270, PLAYER_Y: 760,
+  PLAYER_R: 22,
+  PLAYER_MAX_HP: 100,
+  ENERGY_BASE: 100,
+  ENERGY_PER_KILL: 20,
+  ENERGY_GROWTH: 1.18,
+  MONSTER_BASE_HP: 30,
+  MONSTER_BASE_ATK: 5,
+  MONSTER_SPEED: 60,
+  MONSTER_ATK_RANGE: 36,
+  MONSTER_ATK_INTERVAL: 1.2,
+  HP_MULT_PER_ROUND: 1.18,
+  FIRST_WAVE_COUNT: 7,
+  COUNT_PER_WAVE_ADD: 1,
+  SPAWN_INTERVAL: 0.5,
+  SPAWN_DELAY: 0.3,
+  MAX_ON_SCREEN: 500,
+  WAVE_COUNTDOWN: 3,
+  CARD_TIMEOUT: 15,
+  HEAL_CARD_PCT: 0.30,
+  BOSS_ATK_MULT_BASE: 1.1,    // BOSS前期伤害降低，避免暴毙
+  BOSS_ATK_MULT_PER_ROUND: 0.13,
+  EXECUTE_BOSS_DECAY: 0.09,
+};
+
+// ==================== 技能定义（下调天雷概率，优化前期生存压力） ====================
+const SKILLS = {
+  basic: {
+    id:'basic', name:'平A', icon:'⚔️', type:'active', maxLevel:Infinity,
+    data(level){
+      if(level<=5) return { dmg:[10,12,14,16,20][level-1], cd:0.6 };
+      if(level===6) return { dmg:25.5, cd:0.6 };
+      if(level===7) return { dmg:27, cd:0.6 };
+      return { dmg: 25 + (level-5)*(level-5)/2, cd:0.6 };
+    },
+    getDesc(level){ const d=this.data(level); return `单体 ${d.dmg.toFixed(1)} 伤害\n冷却 ${d.cd}s`; }
+  },
+  aoe: {
+    id:'aoe', name:'群攻', icon:'💥', type:'active', maxLevel:Infinity,
+    data(level){
+      const table=[
+        {r:10,n:5,d:5},{r:13,n:5,d:6},{r:15,n:6,d:7},{r:20,n:5,d:8},
+        {r:25,n:8,d:10},{r:30,n:5,d:12.75},{r:40,n:10,d:13.5}
+      ];
+      if(level<=7) return {...table[level-1], cd:8};
+      return { r:40, n:10, d:(25+(level-5)*(level-5)/2)/2, cd:5 };
+    },
+    getDesc(level){ const d=this.data(level); return `${d.r}px 内随机 ${d.n} 目标\n${d.d.toFixed(1)} 伤害 · 冷却 ${d.cd}s`; }
+  },
+  thorns: {
+    id:'thorns', name:'反伤', icon:'🌵', type:'passive', maxLevel:Infinity,
+    data(level){
+      if(level<=6) return { prob:[0.05,0.10,0.15,0.20,0.25,0.30][level-1], mult:0.10 };
+      if(level===7) return { prob:0.30, mult:0.15 };
+      return { prob:0.30, mult:Math.min(1.0, 0.15+(level-7)*0.05) };
+    },
+    getDesc(level){ const d=this.data(level); return `受击 ${(d.prob*100).toFixed(0)}% 反弹\n平A ${(d.mult*100).toFixed(0)}% 伤害`; },
+    isMax(level){ return level>=7 && this.data(level).mult>=1.0; }
+  },
+  heal: {
+    id:'heal', name:'治疗', icon:'💚', type:'passive', maxLevel:5,
+    data(level){
+      const table=[
+        {prob:0.20,amt:0.06},{prob:0.25,amt:0.06},{prob:0.30,amt:0.06},
+        {prob:0.30,amt:0.08},{prob:0.30,amt:0.10}
+      ];
+      return table[level-1];
+    },
+    getDesc(level){ const d=this.data(level); return `主动攻击 ${(d.prob*100).toFixed(0)}% 回血\n回复 ${(d.amt*100).toFixed(0)}% 最大HP`; }
+  },
+  crit: {
+    id:'crit', name:'暴击', icon:'⚡', type:'passive', maxLevel:Infinity,
+    data(level){
+      if(level<=4) return { prob:[0.05,0.10,0.15,0.20][level-1], bonus:0.10 };
+      if(level===5) return { prob:0.20, bonus:0.15 };
+      if(level===6) return { prob:0.20, bonus:0.20 };
+      if(level===7) return { prob:0.20, bonus:0.25 };
+      return { prob:0.20, bonus:Math.min(5.0, 0.25+(level-7)*0.05) };
+    },
+    getDesc(level){ const d=this.data(level); return `伤害 ${(d.prob*100).toFixed(0)}% 暴击\n基础伤害 +${(d.bonus*100).toFixed(0)}%`; },
+    isMax(level){ return level>=7 && this.data(level).bonus>=5.0; }
+  },
+  execute: {
+    id:'execute', name:'瞬杀', icon:'💀', type:'passive', maxLevel:7,
+    data(level){
+      const baseProb=[0.05,0.10,0.15,0.20,0.25,0.30,0.35][level-1];
+      const round = Math.ceil(G.wave/3);
+      const bossPenalty = Math.max(0.04, baseProb - CFG.EXECUTE_BOSS_DECAY * round);
+      return { prob:baseProb, bossProb:bossPenalty };
+    },
+    getDesc(level){
+      const d=this.data(level);
+      return `小怪 ${(d.prob*100).toFixed(0)}% 秒杀\nBOSS仅 ${Math.max(0,(d.bossProb*100)).toFixed(0)}% 秒杀`;
+    }
+  },
+  luck: {
+    id:'luck', name:'运气', icon:'🍀', type:'passive', maxLevel:Infinity,
+    data(level){
+      if(level<=7) return { mult:1.50+(level-1)*0.05 };
+      return { mult:Math.min(2.0, 1.80+(level-7)*0.05) };
+    },
+    getDesc(level){ return `所有被动概率 ×${this.data(level).mult.toFixed(2)}`; },
+    isMax(level){ return level>=7 && this.data(level).mult>=2.0; }
+  },
+  thunder: {
+    id:'thunder', name:'天雷', icon:'⚡️', type:'passive', maxLevel:6,
+    // 大幅下调全等级落雷触发概率，解决全屏清场过强
+    data(level){
+      const table=[
+        {prob:0.06,mult:1.0},{prob:0.11,mult:1.0},{prob:0.16,mult:1.0},
+        {prob:0.22,mult:1.0},{prob:0.22,mult:1.5},{prob:0.22,mult:2.0}
+      ];
+      return table[level-1];
+    },
+    getDesc(level){ const d=this.data(level); return `主动攻击 ${(d.prob*100).toFixed(0)}% 落雷\n全体敌人 平A×${d.mult} 伤害`; }
+  },
+  chain: {
+    id:'chain', name:'连锁', icon:'🔗', type:'passive', maxLevel:Infinity,
+    data(level){
+      if(level<=7) return { radius:100+(level-1)*10 };
+      return { radius:Math.min(300, 160+(level-7)*10) };
+    },
+    getDesc(level){ return `攻击溅射 ${this.data(level).radius}px\n周围敌人受 50% 伤害`; },
+    isMax(level){ return level>=7 && this.data(level).radius>=300; }
+  },
+  freeze: {
+    id:'freeze', name:'冻结', icon:'❄️', type:'passive', maxLevel:5,
+    // 小幅回调减速，前期容错提升
+    data(level){
+      return { slow:[0.12,0.20,0.26,0.32,0.36][level-1] };
+    },
+    getDesc(level){ return `被攻击敌人减速 ${(this.data(level).slow*100).toFixed(0)}%`; }
+  },
+  charge: {
+    id:'charge', name:'蓄能', icon:'🔋', type:'passive', maxLevel:Infinity,
+    data(level){
+      if(level<=5) return { bonus:[0.50,0.60,0.70,0.80,0.85][level-1] };
+      return { bonus:Math.min(0.92, 0.85+(level-5)*0.015) };
+    },
+    getDesc(level){ const b=this.data(level).bonus; return `杀敌能量 +${(b*100).toFixed(0)}%\n每次获得 ${Math.floor(20*(1+b))} 点`; }
+  },
+  healcard: {
+    id:'healcard', name:'回复', icon:'💖', type:'special', maxLevel:1,
+    getDesc(){ return `立即回复 30% 最大生命值`; }
+  }
+};
+
+const CARD_POOL = ['basic','aoe','thorns','heal','crit','execute','luck','thunder','chain','freeze','charge'];
+
+// ==================== 游戏状态 ====================
+const G = {
+  running:false, paused:false,
+  wave:1, totalKills:0, maxCombo:0, combo:0, comboTimer:0,
+  startTime:0,
+  energy:0, energyMax:CFG.ENERGY_BASE,
+  player:null,
+  monsters:[],
+  projectiles:[],
+  effects:[],
+  damageTexts:[],
+  levels:{},
+  cooldowns:{ basic:0, aoe:0 },
+  lockedTarget:null,
+  autoMode:true,
+  selectedSkill:'basic',
+  spawnQueue:0,
+  spawnTimer:0,
+  waveTotal:0,
+  waveKilled:0,
+  betweenWaves:false,
+  waveCountdown:0,
+  cardModalOpen:false,
+  cardTimer:0,
+  currentCards:[],
+  bossWarningTimer:0,
+};
+
+// ==================== 工具函数 ====================
+const rand = (a,b)=>a+Math.random()*(b-a);
+const randi = (a,b)=>Math.floor(rand(a,b+1));
+const dist = (x1,y1,x2,y2)=>Math.hypot(x1-x2,y1-y2);
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+
+function getLevel(id){ return G.levels[id]||0; }
+function isSkillMaxed(id){
+  const s=SKILLS[id]; if(!s) return true;
+  if(s.maxLevel===1 && id==='healcard') return false;
+  const lv=getLevel(id);
+  if(lv===0) return false;
+  if(s.isMax) return s.isMax(lv);
+  return lv>=s.maxLevel;
+}
+
+// ==================== 玩家 ====================
+function createPlayer(){
+  return { x:CFG.PLAYER_X, y:CFG.PLAYER_Y, hp:CFG.PLAYER_MAX_HP, maxHp:CFG.PLAYER_MAX_HP, r:CFG.PLAYER_R, hitFlash:0 };
+}
+
+// ==================== 怪物生成（分段倍率优化，消除前期暴毙断层） ====================
+const MONSTER_TYPES = [
+  {name:'赤焰魔', color:'#ff4444', eye:'#ffaa00'},
+  {name:'寒冰鬼', color:'#44aaff', eye:'#aaddff'},
+  {name:'毒雾兽', color:'#66cc44', eye:'#ccff88'},
+  {name:'暗影灵', color:'#8844cc', eye:'#ddaaff'},
+  {name:'岩甲怪', color:'#aa8855', eye:'#ffdd88'},
+];
+
+function spawnMonster(isBoss){
+  const round = Math.ceil(G.wave/3);
+  let mult;
+  // 分段倍率重新调校：前期增长平缓、中期适度压力、8轮后陡峭
+  if(round <= 3) mult = Math.pow(1.18, round-1);
+  else if(round <=5) mult = Math.pow(1.26, round-1);
+  else if(round <=7) mult = Math.pow(1.36, round-1);
+  else mult = Math.pow(1.52, round-1);
+
+  const type = MONSTER_TYPES[randi(0,4)];
+  let x,y;
+  const side = randi(0,2);
+  if(side===0){ x=rand(40,CFG.W-40); y=-30; }
+  else if(side===1){ x=-30; y=rand(40,CFG.H*0.6); }
+  else { x=CFG.W+30; y=rand(40,CFG.H*0.6); }
+
+  const baseHp = CFG.MONSTER_BASE_HP*mult;
+  let baseAtk = CFG.MONSTER_BASE_ATK*mult;
+  if(isBoss){
+    const bossAtkBonus = CFG.BOSS_ATK_MULT_BASE + CFG.BOSS_ATK_MULT_PER_ROUND * round;
+    baseAtk *= bossAtkBonus;
+  }
+
+  const m = {
+    x,y, type, isBoss,
+    hp: isBoss? baseHp*3 : baseHp,
+    maxHp: isBoss? baseHp*3 : baseHp,
+    atk: baseAtk,
+    speed: CFG.MONSTER_SPEED,
+    r: isBoss? 32 : 18,
+    atkTimer:0,
+    slowTimer:0, slowAmount:0,
+    hitFlash:0,
+    id: Math.random(),
+  };
+  G.monsters.push(m);
+}
+
+// ==================== 伤害数字、特效 ====================
+function addDamageText(x,y,text,color){
+  G.damageTexts.push({x,y,text,color,life:0.8,vy:-40});
+}
+function addEffect(x,y,type,extra){
+  G.effects.push({x,y,type,life:0.4,maxLife:0.4,...extra});
+}
+
+// ==================== 伤害结算 ====================
+function dealDamage(monster, baseDmg, opts={}){
+  if(monster.hp<=0) return;
+  const luckMult = getLevel('luck')>0 ? SKILLS.luck.data(getLevel('luck')).mult : 1;
+  let dmg = baseDmg;
+  let isCrit=false, isExec=false;
+
+  if(getLevel('crit')>0){
+    const c=SKILLS.crit.data(getLevel('crit'));
+    if(Math.random()<c.prob*luckMult){
+      dmg = baseDmg*(1+c.bonus);
+      isCrit=true;
+    }
+  }
+
+  if(!monster.isBoss && getLevel('execute')>0){
+    const e=SKILLS.execute.data(getLevel('execute'));
+    if(Math.random()<e.prob*luckMult){
+      dmg = monster.hp;
+      isExec=true;
+    }
+  }
+  if(monster.isBoss && getLevel('execute')>0){
+    const e=SKILLS.execute.data(getLevel('execute'));
+    if(Math.random()<e.bossProb*luckMult){
+      dmg = monster.hp;
+      isExec=true;
+    }
+  }
+
+  monster.hp -= dmg;
+  monster.hitFlash=0.15;
+
+  if(getLevel('freeze')>0){
+    const f=SKILLS.freeze.data(getLevel('freeze'));
+    monster.slowTimer=1.5;
+    monster.slowAmount=f.slow;
+  }
+
+  if(getLevel('chain')>0 && !opts.fromChain){
+    const ch=SKILLS.chain.data(getLevel('chain'));
+    for(const other of G.monsters){
+      if(other===monster || other.hp<=0) continue;
+      if(dist(monster.x,monster.y,other.x,other.y)<=ch.radius){
+        dealDamage(other, dmg*0.5, {fromChain:true});
+      }
+    }
+  }
+
+  if(isExec) addDamageText(monster.x, monster.y-20, '秒杀!', '#ff3333');
+  else if(isCrit) addDamageText(monster.x, monster.y-20, Math.ceil(dmg), '#ffdd44');
+  else addDamageText(monster.x, monster.y-16, Math.ceil(dmg), '#ffffff');
+
+  if(opts.isActive && getLevel('heal')>0){
+    const h=SKILLS.heal.data(getLevel('heal'));
+    if(Math.random()<h.prob*luckMult){
+      const healAmt = G.player.maxHp*h.amt;
+      G.player.hp = Math.min(G.player.maxHp, G.player.hp+healAmt);
+      addDamageText(G.player.x, G.player.y-30, '+'+Math.ceil(healAmt), '#55ff77');
+    }
+  }
+
+  if(opts.isActive && getLevel('thunder')>0){
+    const t=SKILLS.thunder.data(getLevel('thunder'));
+    if(Math.random()<t.prob*luckMult){
+      const basicDmg = SKILLS.basic.data(getLevel('basic')||1).dmg;
+      const thunderDmg = basicDmg*t.mult;
+      addEffect(0,0,'thunder');
+      for(const m of G.monsters){
+        if(m.hp>0){
+          dealDamage(m, thunderDmg, {fromChain:true});
+          addEffect(m.x, m.y, 'thunderHit');
+        }
+      }
+    }
+  }
+
+  if(monster.hp<=0) killMonster(monster);
+}
+
+function killMonster(monster){
+  let energyGain = CFG.ENERGY_PER_KILL;
+  if(getLevel('charge')>0){
+    energyGain = Math.floor(CFG.ENERGY_PER_KILL*(1+SKILLS.charge.data(getLevel('charge')).bonus));
+  }
+  G.energy += energyGain;
+  G.totalKills++;
+  G.waveKilled++;
+  G.combo++;
+  G.comboTimer=2;
+  if(G.combo>G.maxCombo) G.maxCombo=G.combo;
+
+  addEffect(monster.x, monster.y, 'death', {color:monster.type.color, r:monster.r});
+  if(G.lockedTarget===monster) G.lockedTarget=null;
+
+  if(G.energy>=G.energyMax && !G.cardModalOpen){
+    triggerCardModal();
+  }
+}
+
+// 玩家受伤
+function playerTakeDamage(amount){
+  G.player.hp -= amount;
+  G.player.hitFlash=0.2;
+  G.combo=0;
+  addDamageText(G.player.x, G.player.y-30, '-'+Math.ceil(amount), '#ff5555');
+
+  if(getLevel('thorns')>0){
+    const t=SKILLS.thorns.data(getLevel('thorns'));
+    const luckMult = getLevel('luck')>0 ? SKILLS.luck.data(getLevel('luck')).mult : 1;
+    if(Math.random()<t.prob*luckMult){
+      const basicDmg = SKILLS.basic.data(getLevel('basic')||1).dmg;
+      const reflectDmg = basicDmg*t.mult;
+      let nearest=null, nd=Infinity;
+      for(const m of G.monsters){
+        if(m.hp<=0) continue;
+        const d=dist(G.player.x,G.player.y,m.x,m.y);
+        if(d<nd){nd=d; nearest=m;}
+      }
+      if(nearest){
+        dealDamage(nearest, reflectDmg, {fromChain:true});
+        addDamageText(nearest.x, nearest.y-20, '反伤'+Math.ceil(reflectDmg), '#ff8844');
+      }
+    }
+  }
+
+  if(G.player.hp<=0){
+    G.player.hp=0;
+    gameOver();
+  }
+}
+
+// ==================== 攻击逻辑 ====================
+function findNearestMonster(){
+  let nearest=null, nd=Infinity;
+  for(const m of G.monsters){
+    if(m.hp<=0) continue;
+    const d=dist(G.player.x,G.player.y,m.x,m.y);
+    if(d<nd){nd=d; nearest=m;}
+  }
+  return nearest;
+}
+
+function doBasicAttack(){
+  const lv=getLevel('basic')||1;
+  const d=SKILLS.basic.data(lv);
+  if(G.cooldowns.basic>0) return false;
+  let target = G.lockedTarget && G.lockedTarget.hp>0 ? G.lockedTarget : findNearestMonster();
+  if(!target) return false;
+  G.cooldowns.basic=d.cd;
+  G.projectiles.push({
+    x:G.player.x, y:G.player.y-20, tx:target.x, ty:target.y,
+    target, speed:600, dmg:d.dmg, type:'basic', life:1
+  });
+  return true;
+}
+
+function doAoeAttack(){
+  const lv=getLevel('aoe')||0;
+  if(lv===0) return false;
+  const d=SKILLS.aoe.data(lv);
+  if(G.cooldowns.aoe>0) return false;
+  let target = G.lockedTarget && G.lockedTarget.hp>0 ? G.lockedTarget : findNearestMonster();
+  if(!target) return false;
+  G.cooldowns.aoe=d.cd;
+  const inRange = G.monsters.filter(m=>m.hp>0 && dist(target.x,target.y,m.x,m.y)<=d.r);
+  const shuffled = inRange.sort(()=>Math.random()-0.5).slice(0, d.n);
+  addEffect(target.x, target.y, 'aoe', {radius:d.r});
+  for(const m of shuffled){
+    dealDamage(m, d.dmg, {isActive:true});
+  }
+  return true;
+}
+
+// ==================== 抽卡系统 ====================
+function triggerCardModal(){
+  G.cardModalOpen=true;
+  G.paused=true;
+  G.cardTimer=CFG.CARD_TIMEOUT;
+  const round = Math.ceil(G.wave/3);
+  const available = CARD_POOL.filter(id=>!isSkillMaxed(id));
+  let pool = [...available];
+  let addHealCard = true;
+  if(round >=4 && round <=5) addHealCard = Math.random()>0.42;
+  if(round >=6 && round <=7) addHealCard = Math.random()>0.68;
+  if(round >=8) addHealCard = Math.random()>0.88;
+  if(addHealCard) pool.push('healcard');
+
+  const shuffled = pool.sort(()=>Math.random()-0.5);
+  G.currentCards = shuffled.slice(0, Math.min(3, pool.length));
+  renderCardModal();
+  document.getElementById('cardModal').classList.add('show');
+}
+
+function renderCardModal(){
+  const list=document.getElementById('cardList');
+  list.innerHTML='';
+  for(const id of G.currentCards){
+    const s=SKILLS[id];
+    const lv=getLevel(id);
+    const nextLv = id==='healcard' ? 1 : lv+1;
+    const desc = id==='healcard' ? s.getDesc() : s.getDesc(nextLv);
+    const levelText = id==='healcard' ? '永久可用' : (lv===0? '新技能' : `Lv${lv} → Lv${nextLv}`);
+    const div=document.createElement('div');
+    div.className='card';
+    div.innerHTML=`
+      <div class="c-icon">${s.icon}</div>
+      <div class="c-name">${s.name}</div>
+      <div class="c-level">${levelText}</div>
+      <div class="c-desc">${desc.replace(/\n/g,'<br>')}</div>
+    `;
+    div.onclick=()=>selectCard(id);
+    list.appendChild(div);
+  }
+}
+
+function selectCard(id){
+  if(!G.cardModalOpen) return;
+  if(id==='healcard'){
+    const healAmt=G.player.maxHp*CFG.HEAL_CARD_PCT;
+    G.player.hp=Math.min(G.player.maxHp, G.player.hp+healAmt);
+    addDamageText(G.player.x, G.player.y-40, '+'+Math.ceil(healAmt), '#ff88cc');
+  } else {
+    G.levels[id] = (G.levels[id]||0)+1;
+  }
+  G.energy=0;
+  G.cardModalOpen=false;
+  G.paused=false;
+  document.getElementById('cardModal').classList.remove('show');
+}
+
+// ==================== 新增：技能图鉴弹窗渲染逻辑 ====================
+function openSkillBook(){
+  const wrap = document.getElementById('skillListWrap');
+  wrap.innerHTML = '';
+  // 遍历全技能展示，0级也显示
+  for(const sid in SKILLS){
+    const sk = SKILLS[sid];
+    const lv = getLevel(sid);
+    let descStr;
+    if(sid === 'healcard'){
+      descStr = sk.getDesc();
+    }else{
+      descStr = sk.getDesc(lv || 1);
+    }
+    const item = document.createElement('div');
+    item.className = 'skill-item';
+    item.innerHTML = `
+      <div class="skill-item-top">
+        <span class="skill-icon">${sk.icon}</span>
+        <div class="skill-name-lv">
+          <div class="skill-name">${sk.name}</div>
+          <div class="skill-lv">Lv.${lv} ${lv===0?'(未解锁)':''}</div>
+        </div>
+      </div>
+      <div class="skill-desc">${descStr}</div>
+    `;
+    wrap.appendChild(item);
+  }
+  document.getElementById('skillBookModal').classList.add('show');
+}
+function closeSkillBook(){
+  document.getElementById('skillBookModal').classList.remove('show');
+}
+
+// ==================== 波次管理（修复怪物数量计算BUG） ====================
+function startWave(){
+  G.betweenWaves=false;
+  G.waveKilled=0;
+  const round = Math.ceil(G.wave/3);
+  let addNum;
+  if(round <=3) addNum = 1;
+  else if(round <=5) addNum = 2;
+  else addNum = 4;
+  // 修复原数量计算误差，准确计算总怪物
+  const baseCount = CFG.FIRST_WAVE_COUNT + addNum*(G.wave-1);
+  const isBossWave = G.wave%3===0;
+  G.waveTotal = baseCount + (isBossWave ? 1 : 0);
+  G.spawnQueue = G.waveTotal;
+  G.spawnTimer = CFG.SPAWN_DELAY;
+  if(isBossWave){
+    G.bossWarningTimer=2;
+    document.getElementById('bossWarning').style.display='block';
+  }
+  updateHUD();
+}
+
+function endWave(){
+  G.betweenWaves=true;
+  G.waveCountdown=CFG.WAVE_COUNTDOWN;
+  G.energyMax = Math.floor(G.energyMax*CFG.ENERGY_GROWTH);
+  document.getElementById('waveCountdown').style.display='block';
+}
+function nextWave(){
+  G.wave++;
+  document.getElementById('waveCountdown').style.display='none';
+  startWave();
+}
+
+// ==================== 主循环 ====================
+let lastTime=0, rafId=0;
+function loop(ts){
+  if(!G.running){ rafId=0; return; }
+  const dt = Math.min(0.05, (ts-lastTime)/1000);
+  lastTime=ts;
+  if(!G.paused) update(dt);
+  render();
+  rafId=requestAnimationFrame(loop);
+}
+
+function update(dt){
+  if(G.comboTimer>0){ G.comboTimer-=dt; if(G.comboTimer<=0) G.combo=0; }
+  if(G.bossWarningTimer>0){ G.bossWarningTimer-=dt; if(G.bossWarningTimer<=0) document.getElementById('bossWarning').style.display='none'; }
+
+  G.cooldowns.basic=Math.max(0,G.cooldowns.basic-dt);
+  G.cooldowns.aoe=Math.max(0,G.cooldowns.aoe-dt);
+  if(G.player.hitFlash>0) G.player.hitFlash-=dt;
+
+  if(G.betweenWaves){
+    G.waveCountdown-=dt;
+    document.getElementById('waveCountdown').textContent=Math.ceil(G.waveCountdown);
+    if(G.waveCountdown<=0) nextWave();
+    updateProjectiles(dt);
+    updateEffects(dt);
+    updateDamageTexts(dt);
+    return;
+  }
+
+  if(G.spawnQueue>0){
+    G.spawnTimer-=dt;
+    const aliveCount = G.monsters.filter(m=>m.hp>0).length;
+    if(G.spawnTimer<=0 && aliveCount<CFG.MAX_ON_SCREEN){
+      const isBossWave = G.wave%3===0;
+      const isBoss = isBossWave && G.spawnQueue===1;
+      spawnMonster(isBoss);
+      G.spawnQueue--;
+      G.spawnTimer=CFG.SPAWN_INTERVAL;
+    }
+  }
+
+  // 同屏提示
+  const aliveNow = G.monsters.filter(m=>m.hp>0).length;
+  document.getElementById('capWarning').style.display = (aliveNow>=CFG.MAX_ON_SCREEN && G.spawnQueue>0)?'block':'none';
+
+  // 怪物AI
+  for(const m of G.monsters){
+    if(m.hp<=0) continue;
+    if(m.hitFlash>0) m.hitFlash-=dt;
+    let spd=m.speed;
+    if(m.slowTimer>0){ m.slowTimer-=dt; spd*=(1-m.slowAmount); }
+    const dx=G.player.x-m.x, dy=G.player.y-m.y;
+    const d=Math.hypot(dx,dy);
+    if(d>CFG.MONSTER_ATK_RANGE){
+      m.x += dx/d*spd*dt;
+      m.y += dy/d*spd*dt;
+    } else {
+      m.atkTimer-=dt;
+      if(m.atkTimer<=0){
+        m.atkTimer=CFG.MONSTER_ATK_INTERVAL;
+        playerTakeDamage(m.atk);
+      }
+    }
+  }
+
+  G.monsters=G.monsters.filter(m=>m.hp>0 || m.hitFlash>0);
+  G.monsters=G.monsters.filter(m=>m.hp>0);
+
+  if(G.autoMode){
+    if(getLevel('aoe')>0 && G.cooldowns.aoe<=0){
+      if(!doAoeAttack()) doBasicAttack();
+    } else {
+      doBasicAttack();
+    }
+  }
+
+  updateProjectiles(dt);
+  updateEffects(dt);
+  updateDamageTexts(dt);
+
+  // 波次结束判定
+  const aliveLeft = G.monsters.filter(m=>m.hp>0).length;
+  if(G.spawnQueue<=0 && aliveLeft===0 && !G.betweenWaves){
+    endWave();
+  }
+
+  updateHUD();
+}
+
+function updateProjectiles(dt){
+  for(const p of G.projectiles){
+    p.life-=dt;
+    if(p.target && p.target.hp>0){ p.tx=p.target.x; p.ty=p.target.y; }
+    const dx=p.tx-p.x, dy=p.ty-p.y;
+    const d=Math.hypot(dx,dy);
+    if(d<10 || p.life<=0){
+      if(p.target && p.target.hp>0){
+        dealDamage(p.target, p.dmg, {isActive:true});
+      }
+      p.dead=true;
+    } else {
+      p.x+=dx/d*p.speed*dt;
+      p.y+=dy/d*p.speed*dt;
+    }
+  }
+  G.projectiles=G.projectiles.filter(p=>!p.dead);
+}
+function updateEffects(dt){
+  for(const e of G.effects){ e.life-=dt; }
+  G.effects=G.effects.filter(e=>e.life>0);
+}
+function updateDamageTexts(dt){
+  for(const t of G.damageTexts){
+    t.life-=dt;
+    t.y+=t.vy*dt;
+    t.vy*=0.95;
+  }
+  G.damageTexts=G.damageTexts.filter(t=>t.life>0);
+}
+
+// ==================== 渲染 ====================
+const canvas=document.getElementById('gameCanvas');
+const ctx=canvas.getContext('2d');
+
+function resizeCanvas(){
+  const wrap=document.getElementById('gameWrap');
+  const ww=wrap.clientWidth, wh=wrap.clientHeight;
+  const ratio=CFG.W/CFG.H;
+  let cw,ch;
+  if(ww/wh>ratio){ ch=wh; cw=ch*ratio; }
+  else { cw=ww; ch=cw/ratio; }
+  canvas.style.width=cw+'px';
+  canvas.style.height=ch+'px';
+  canvas.width=CFG.W;
+  canvas.height=CFG.H;
+}
+window.addEventListener('resize', resizeCanvas);
+
+function render(){
+  ctx.clearRect(0,0,CFG.W,CFG.H);
+  ctx.strokeStyle='rgba(80,60,120,.08)';
+  ctx.lineWidth=1;
+  for(let x=0;x<CFG.W;x+=40){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,CFG.H); ctx.stroke(); }
+  for(let y=0;y<CFG.H;y+=40){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(CFG.W,y); ctx.stroke(); }
+
+  if(G.lockedTarget && G.lockedTarget.hp>0){
+    ctx.strokeStyle='rgba(255,200,80,.4)';
+    ctx.lineWidth=2;
+    ctx.setLineDash([6,4]);
+    ctx.beginPath();
+    ctx.moveTo(G.player.x,G.player.y);
+    ctx.lineTo(G.lockedTarget.x,G.lockedTarget.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.strokeStyle='rgba(255,200,80,.7)';
+    ctx.beginPath();
+    ctx.arc(G.lockedTarget.x,G.lockedTarget.y,G.lockedTarget.r+8,0,Math.PI*2);
+    ctx.stroke();
+  }
+
+  for(const m of G.monsters){
+    if(m.hp<=0) continue;
+    drawMonster(m);
+  }
+  drawPlayer();
+
+  for(const p of G.projectiles){
+    ctx.fillStyle='#ffdd66';
+    ctx.shadowColor='#ffaa00';
+    ctx.shadowBlur=12;
+    ctx.beginPath(); ctx.arc(p.x,p.y,5,0,Math.PI*2); ctx.fill();
+    ctx.shadowBlur=0;
+  }
+
+  for(const e of G.effects) drawEffect(e);
+
+  for(const t of G.damageTexts){
+    ctx.globalAlpha=clamp(t.life/0.8,0,1);
+    ctx.fillStyle=t.color;
+    ctx.font='bold 16px sans-serif';
+    ctx.textAlign='center';
+    ctx.strokeStyle='#000';
+    ctx.lineWidth=3;
+    ctx.strokeText(t.text,t.x,t.y);
+    ctx.fillText(t.text,t.x,t.y);
+    ctx.globalAlpha=1;
+  }
+
+  if(G.combo>=3){
+    ctx.fillStyle='rgba(255,200,80,.8)';
+    ctx.font='bold 28px sans-serif';
+    ctx.textAlign='right';
+    ctx.fillText(G.combo+' COMBO', CFG.W-16, 130);
+  }
+}
+
+function drawPlayer(){
+  const p=G.player;
+  const grad=ctx.createRadialGradient(p.x,p.y,5,p.x,p.y,50);
+  grad.addColorStop(0,'rgba(100,150,255,.3)');
+  grad.addColorStop(1,'rgba(100,150,255,0)');
+  ctx.fillStyle=grad;
+  ctx.beginPath(); ctx.arc(p.x,p.y,50,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle = p.hitFlash>0 ? '#ffffff' : '#5588ff';
+  ctx.shadowColor='#4488ff';
+  ctx.shadowBlur=16;
+  ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
+  ctx.shadowBlur=0;
+  ctx.strokeStyle='#88bbff';
+  ctx.lineWidth=3;
+  ctx.beginPath(); ctx.arc(p.x,p.y,p.r-4,0,Math.PI*2); ctx.stroke();
+  ctx.fillStyle='#fff';
+  ctx.beginPath(); ctx.arc(p.x-6,p.y-3,3,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(p.x+6,p.y-3,3,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#112';
+  ctx.beginPath(); ctx.arc(p.x-6,p.y-3,1.5,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(p.x+6,p.y-3,1.5,0,Math.PI*2); ctx.fill();
+}
+
+function drawMonster(m){
+  if(m.slowTimer>0){
+    ctx.fillStyle='rgba(100,180,255,.2)';
+    ctx.beginPath(); ctx.arc(m.x,m.y,m.r+6,0,Math.PI*2); ctx.fill();
+  }
+  if(m.isBoss){
+    const grad=ctx.createRadialGradient(m.x,m.y,m.r,m.x,m.y,m.r+20);
+    grad.addColorStop(0,'rgba(255,50,50,.4)');
+    grad.addColorStop(1,'rgba(255,50,50,0)');
+    ctx.fillStyle=grad;
+    ctx.beginPath(); ctx.arc(m.x,m.y,m.r+20,0,Math.PI*2); ctx.fill();
+  }
+  ctx.fillStyle = m.hitFlash>0 ? '#fff' : m.type.color;
+  ctx.shadowColor=m.type.color;
+  ctx.shadowBlur= m.isBoss?16:8;
+  ctx.beginPath(); ctx.arc(m.x,m.y,m.r,0,Math.PI*2); ctx.fill();
+  ctx.shadowBlur=0;
+  ctx.strokeStyle='rgba(0,0,0,.5)';
+  ctx.lineWidth=2;
+  ctx.beginPath(); ctx.arc(m.x,m.y,m.r,0,Math.PI*2); ctx.stroke();
+  ctx.fillStyle=m.type.eye;
+  ctx.beginPath(); ctx.arc(m.x-m.r*0.3,m.y-m.r*0.15,m.r*0.18,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(m.x+m.r*0.3,m.y-m.r*0.15,m.r*0.18,0,Math.PI*2); ctx.fill();
+  const bw=m.r*2, bh=4;
+  const bx=m.x-bw/2, by=m.y-m.r-10;
+  ctx.fillStyle='rgba(0,0,0,.6)';
+  ctx.fillRect(bx,by,bw,bh);
+  ctx.fillStyle= m.isBoss? '#ff4444' : '#66dd66';
+  ctx.fillRect(bx,by,bw*(m.hp/m.maxHp),bh);
+  if(m.isBoss){
+    ctx.fillStyle='#ff3333';
+    ctx.font='bold 10px sans-serif';
+    ctx.textAlign='center';
+    ctx.fillText('BOSS', m.x, by-3);
+  }
+}
+
+function drawEffect(e){
+  const t=1-e.life/e.maxLife;
+  if(e.type==='death'){
+    ctx.globalAlpha=1-t;
+    ctx.fillStyle=e.color;
+    ctx.beginPath(); ctx.arc(e.x,e.y,e.r*(1+t*1.5),0,Math.PI*2); ctx.fill();
+    ctx.globalAlpha=1;
+  } else if(e.type==='aoe'){
+    ctx.globalAlpha=(1-t)*0.6;
+    ctx.strokeStyle='#ff8844';
+    ctx.lineWidth=3;
+    ctx.beginPath(); ctx.arc(e.x,e.y,e.radius*(0.5+t*0.5),0,Math.PI*2); ctx.stroke();
+    ctx.fillStyle='rgba(255,120,60,.15)';
+    ctx.beginPath(); ctx.arc(e.x,e.y,e.radius,0,Math.PI*2); ctx.fill();
+    ctx.globalAlpha=1;
+  } else if(e.type==='thunder'){
+    ctx.globalAlpha=(1-t)*0.3;
+    ctx.fillStyle='#88ccff';
+    ctx.fillRect(0,0,CFG.W,CFG.H);
+    ctx.globalAlpha=1;
+  } else if(e.type==='thunderHit'){
+    ctx.globalAlpha=1-t;
+    ctx.strokeStyle='#aaddff';
+    ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.moveTo(e.x+rand(-10,10),0);
+    ctx.lineTo(e.x+rand(-5,5),e.y-20);
+    ctx.lineTo(e.x,e.y);
+    ctx.stroke();
+    ctx.globalAlpha=1;
+  }
+}
+
+// ==================== HUD（修复击杀数量显示错误） ====================
+function updateHUD(){
+  const round=Math.ceil(G.wave/3);
+  const waveInRound=((G.wave-1)%3)+1;
+  document.getElementById('waveInfo').textContent=`第${round}轮 · 第${waveInRound}波 (总第${G.wave}波)`;
+  const aliveNow = G.monsters.filter(m=>m.hp>0).length;
+  document.getElementById('killInfo').textContent=`击杀 ${G.waveKilled}/${G.waveTotal} · 场上 ${aliveNow}`;
+  const hpPct=G.player.hp/G.player.maxHp*100;
+  document.getElementById('hpBar').style.width=hpPct+'%';
+  document.getElementById('hpLabel').textContent=`${Math.ceil(G.player.hp)} / ${G.player.maxHp}`;
+  const enPct=Math.min(100,G.energy/G.energyMax*100);
+  document.getElementById('energyBar').style.width=enPct+'%';
+  document.getElementById('energyLabel').textContent=`${Math.floor(G.energy)} / ${G.energyMax}`;
+}
+
+// ==================== 游戏结束 ====================
+function gameOver(){
+  G.running=false;
+  G.paused=true;
+  const round=Math.ceil(G.wave/3);
+  document.getElementById('overWave').textContent=`存活至：第${round}轮 第${((G.wave-1)%3)+1}波（总第${G.wave}波）`;
+  document.getElementById('overKill').textContent=`总击杀：${G.totalKills}`;
+  document.getElementById('overCombo').textContent=`最高连杀：${G.maxCombo}`;
+  const dur=Math.floor((Date.now()-G.startTime)/1000);
+  document.getElementById('overTime').textContent=`存活时间：${Math.floor(dur/60)}分${dur%60}秒`;
+  const skillParts=[];
+  for(const id of CARD_POOL){
+    const lv=getLevel(id);
+    if(lv>0) skillParts.push(`${SKILLS[id].icon}${SKILLS[id].name} Lv${lv}`);
+  }
+  document.getElementById('overSkills').innerHTML='已构筑技能：<br>'+skillParts.join(' · ');
+  document.getElementById('overModal').classList.add('show');
+}
+
+// ==================== 初始化 ====================
+function initGame(){
+  G.running=true; G.paused=false;
+  G.wave=1; G.totalKills=0; G.maxCombo=0; G.combo=0; G.comboTimer=0;
+  G.startTime=Date.now();
+  G.energy=0; G.energyMax=CFG.ENERGY_BASE;
+  G.player=createPlayer();
+  G.monsters=[]; G.projectiles=[]; G.effects=[]; G.damageTexts=[];
+  G.levels={ basic:1 };
+  G.cooldowns={ basic:0, aoe:0 };
+  G.lockedTarget=null;
+  G.autoMode=true;
+  G.spawnQueue=0; G.waveTotal=0; G.waveKilled=0;
+  G.betweenWaves=false; G.cardModalOpen=false;
+  document.getElementById('overModal').classList.remove('show');
+  document.getElementById('cardModal').classList.remove('show');
+  document.getElementById('skillBookModal').classList.remove('show');
+  document.getElementById('bossWarning').style.display='none';
+  document.getElementById('waveCountdown').style.display='none';
+  document.getElementById('btnAuto').classList.add('active');
+  startWave();
+  lastTime=performance.now();
+  if(rafId) cancelAnimationFrame(rafId);
+  rafId=requestAnimationFrame(loop);
+}
+
+// ==================== 事件绑定（新增图鉴按钮） ====================
+document.getElementById('startBtn').onclick=()=>{
+  document.getElementById('startModal').classList.add('hide');
+  resizeCanvas();
+  initGame();
+};
+document.getElementById('restartBtn').onclick=()=>{ initGame(); };
+document.getElementById('closeSkillBook').onclick=closeSkillBook;
+document.getElementById('btnSkillBook').onclick=openSkillBook;
+
+document.getElementById('btnAuto').onclick=()=>{
+  G.autoMode=!G.autoMode;
+  document.getElementById('btnAuto').classList.toggle('active',G.autoMode);
+};
+document.getElementById('btnAttack').onclick=()=>{
+  G.autoMode=false;
+  document.getElementById('btnAuto').classList.remove('active');
+  doBasicAttack();
+};
+document.getElementById('btnAoe').onclick=()=>{
+  G.autoMode=false;
+  document.getElementById('btnAuto').classList.remove('active');
+  doAoeAttack();
+};
+document.getElementById('btnLock').onclick=()=>{
+  G.lockedTarget=findNearestMonster();
+};
+
+// 键盘
+document.addEventListener('keydown',e=>{
+  if(e.key==='1'){ G.selectedSkill='basic'; doBasicAttack(); G.autoMode=false; document.getElementById('btnAuto').classList.remove('active'); }
+  if(e.key==='2'){ G.selectedSkill='aoe'; doAoeAttack(); G.autoMode=false; document.getElementById('btnAuto').classList.remove('active'); }
+  if(e.key==='Tab'){ e.preventDefault(); G.lockedTarget=findNearestMonster(); }
+  if(e.ctrlKey && e.key==='z'){ e.preventDefault(); G.autoMode=!G.autoMode; document.getElementById('btnAuto').classList.toggle('active',G.autoMode); }
+});
+
+// 抽卡倒计时
+setInterval(()=>{
+  if(G.cardModalOpen){
+    G.cardTimer-=0.1;
+    document.getElementById('cardTimer').textContent=`剩余选择时间：${Math.max(0,Math.ceil(G.cardTimer))}s`;
+    if(G.cardTimer<=0){
+      const id=G.currentCards[randi(0,G.currentCards.length-1)];
+      selectCard(id);
+    }
+  }
+},100);
+
+resizeCanvas();
+</script>
+</body>
+</html>
